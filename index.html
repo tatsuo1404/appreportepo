@@ -854,7 +854,13 @@
   function saveState() {
     const ct = document.getElementById('conclusionesText');
     if (ct) state.conclusiones = ct.value;
-    localStorage.setItem('rpo_state', JSON.stringify(state));
+    try {
+      localStorage.setItem('rpo_state', JSON.stringify(state));
+    } catch(e) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        alert('⚠️ No se pudo guardar: el almacenamiento del navegador está lleno.\n\nSugerencia: elimina algunas imágenes de las tarjetas o usa imágenes más pequeñas.');
+      }
+    }
   }
 
   function loadState() {
@@ -1687,25 +1693,42 @@
     document.getElementById('imgUploadInput').click();
   }
 
+  function compressImage(dataUrl, maxPx, quality, callback) {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else       { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  }
+
   function onImgUpload(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
     const reader = new FileReader();
     reader.onload = (e) => {
-      const data = e.target.result;
-      if (_imgTarget === 'modal') {
-        _modalImgData = data;
-        const prev = document.getElementById('mImgPreview');
-        prev.src = data; prev.classList.add('show');
-        updateModalPreview();
-      } else {
-        // direct card upload
-        const plat  = findPlat(_imgPlatId);
-        const camp  = plat ? findCamp(plat, _imgCampId) : null;
-        const adset = camp ? findAdset(camp, _imgAdsetId) : null;
-        const ad    = adset ? findAd(adset, _imgAdId) : null;
-        if (ad) { ad.img = data; saveState(); render(); }
-      }
+      compressImage(e.target.result, 600, 0.70, (data) => {
+        if (_imgTarget === 'modal') {
+          _modalImgData = data;
+          const prev = document.getElementById('mImgPreview');
+          prev.src = data; prev.classList.add('show');
+          updateModalPreview();
+        } else {
+          // direct card upload
+          const plat  = findPlat(_imgPlatId);
+          const camp  = plat ? findCamp(plat, _imgCampId) : null;
+          const adset = camp ? findAdset(camp, _imgAdsetId) : null;
+          const ad    = adset ? findAd(adset, _imgAdId) : null;
+          if (ad) { ad.img = data; saveState(); render(); }
+        }
+      });
     };
     reader.readAsDataURL(file);
     input.value = '';
