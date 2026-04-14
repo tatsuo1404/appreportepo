@@ -1171,8 +1171,9 @@
 
   function buildCampMetricsHTML(plat, camp) {
     const m = effectiveCampMetrics(camp);
+    const campOv = camp.ov || {};
     const cpm  = m.impressions > 0 ? m.spend / m.impressions * 1000 : 0;
-    const freq = m.reach > 0 ? m.impressions / m.reach : 0;
+    const freq = (campOv.freq != null) ? campOv.freq : (m.reach > 0 ? m.impressions / m.reach : 0);
     const hasOv = camp.ov && Object.keys(camp.ov).length > 0;
     if (m.spend === 0 && m.reach === 0 && m.impressions === 0) return '';
     const hl = camp.hl || {};
@@ -1249,8 +1250,9 @@
 
   function buildAdsetMetricsHTML(plat, camp, adset) {
     const m = effectiveAdsetMetrics(adset);
+    const ov = adset.ov || {};
     const cpm  = m.impressions > 0 ? m.spend / m.impressions * 1000 : 0;
-    const freq = m.reach > 0 ? m.impressions / m.reach : 0;
+    const freq = (ov.freq != null) ? ov.freq : (m.reach > 0 ? m.impressions / m.reach : 0);
     const hasOv = adset.ov && Object.keys(adset.ov).length > 0;
     if (m.spend === 0 && m.reach === 0 && m.impressions === 0) return '';
     const hl = adset.hl || {};
@@ -1311,6 +1313,7 @@
         <div class="mef-field"><label>Alcance</label><input type="number" id="ced_reach_${campId}" value="${m.reach}"></div>
         <div class="mef-field"><label>Impresiones</label><input type="number" id="ced_impr_${campId}" value="${m.impressions}"></div>
         <div class="mef-field"><label>Clics</label><input type="number" id="ced_clicks_${campId}" value="${m.clicks}"></div>
+        <div class="mef-field"><label>Frecuencia</label><input type="number" id="ced_freq_${campId}" value="${(camp.ov&&camp.ov.freq!=null)?camp.ov.freq:''}" step="0.01" placeholder="Auto"></div>
         <div class="mef-btns">
           <button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="saveCampOv('${platId}','${campId}')">✓ Guardar</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="cancelCampEdit('${platId}','${campId}')">✕</button>
@@ -1337,12 +1340,22 @@
   function saveCampOv(platId, campId) {
     const plat = findPlat(platId);
     const camp = findCamp(plat, campId);
-    camp.ov = {
-      spend:       parseFloat(document.getElementById(`ced_spend_${campId}`)?.value) || 0,
-      reach:       parseInt(document.getElementById(`ced_reach_${campId}`)?.value) || 0,
-      impressions: parseInt(document.getElementById(`ced_impr_${campId}`)?.value) || 0,
-      clicks:      parseInt(document.getElementById(`ced_clicks_${campId}`)?.value) || 0,
-    };
+    const campAgg = aggCampWithOv(camp);
+    const ceSpend  = parseFloat(document.getElementById(`ced_spend_${campId}`)?.value) || 0;
+    const ceReach  = parseInt(document.getElementById(`ced_reach_${campId}`)?.value) || 0;
+    const ceImpr   = parseInt(document.getElementById(`ced_impr_${campId}`)?.value) || 0;
+    const ceClicks = parseInt(document.getElementById(`ced_clicks_${campId}`)?.value) || 0;
+    const ceFreqStr = document.getElementById(`ced_freq_${campId}`)?.value;
+    const newCampOv = {};
+    if (Math.abs(ceSpend - campAgg.spend) > 0.001)   newCampOv.spend = ceSpend;
+    if (ceReach  !== campAgg.reach)                   newCampOv.reach = ceReach;
+    if (ceImpr   !== campAgg.impressions)             newCampOv.impressions = ceImpr;
+    if (ceClicks !== campAgg.clicks)                  newCampOv.clicks = ceClicks;
+    if (ceFreqStr !== '' && ceFreqStr != null) {
+      const ceFreq = parseFloat(ceFreqStr);
+      if (!isNaN(ceFreq)) newCampOv.freq = ceFreq;
+    }
+    camp.ov = Object.keys(newCampOv).length > 0 ? newCampOv : null;
     const hlChips = document.querySelectorAll(`#campMetrics_${campId} .mef-hl-chip`);
     camp.hl = {};
     hlChips.forEach(c => { if (c.classList.contains('on')) camp.hl[c.dataset.hl] = true; });
@@ -1389,6 +1402,7 @@
         <div class="mef-field"><label>Alcance</label><input type="number" id="aed_reach_${adsetId}" value="${m.reach}"></div>
         <div class="mef-field"><label>Impresiones</label><input type="number" id="aed_impr_${adsetId}" value="${m.impressions}"></div>
         <div class="mef-field"><label>Clics</label><input type="number" id="aed_clicks_${adsetId}" value="${m.clicks}"></div>
+        <div class="mef-field"><label>Frecuencia</label><input type="number" id="aed_freq_${adsetId}" value="${(adset.ov&&adset.ov.freq!=null)?adset.ov.freq:''}" step="0.01" placeholder="Auto"></div>
         <div class="mef-btns">
           <button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="saveAdsetOv('${platId}','${campId}','${adsetId}')">✓ Guardar</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="cancelAdsetEdit('${platId}','${campId}','${adsetId}')">✕</button>
@@ -1416,12 +1430,22 @@
     const plat = findPlat(platId);
     const camp = findCamp(plat, campId);
     const adset = findAdset(camp, adsetId);
-    adset.ov = {
-      spend:       parseFloat(document.getElementById(`aed_spend_${adsetId}`)?.value) || 0,
-      reach:       parseInt(document.getElementById(`aed_reach_${adsetId}`)?.value) || 0,
-      impressions: parseInt(document.getElementById(`aed_impr_${adsetId}`)?.value) || 0,
-      clicks:      parseInt(document.getElementById(`aed_clicks_${adsetId}`)?.value) || 0,
-    };
+    const agg = aggAds(adset.ads);
+    const eSpend  = parseFloat(document.getElementById(`aed_spend_${adsetId}`)?.value) || 0;
+    const eReach  = parseInt(document.getElementById(`aed_reach_${adsetId}`)?.value) || 0;
+    const eImpr   = parseInt(document.getElementById(`aed_impr_${adsetId}`)?.value) || 0;
+    const eClicks = parseInt(document.getElementById(`aed_clicks_${adsetId}`)?.value) || 0;
+    const eFreqStr = document.getElementById(`aed_freq_${adsetId}`)?.value;
+    const newOv = {};
+    if (Math.abs(eSpend - agg.spend) > 0.001)    newOv.spend = eSpend;
+    if (eReach   !== agg.reach)                   newOv.reach = eReach;
+    if (eImpr    !== agg.impressions)             newOv.impressions = eImpr;
+    if (eClicks  !== agg.clicks)                  newOv.clicks = eClicks;
+    if (eFreqStr !== '' && eFreqStr != null) {
+      const eFreq = parseFloat(eFreqStr);
+      if (!isNaN(eFreq)) newOv.freq = eFreq;
+    }
+    adset.ov = Object.keys(newOv).length > 0 ? newOv : null;
     const hlChips = document.querySelectorAll(`#adsetMetrics_${adsetId} .mef-hl-chip`);
     adset.hl = {};
     hlChips.forEach(c => { if (c.classList.contains('on')) adset.hl[c.dataset.hl] = true; });
