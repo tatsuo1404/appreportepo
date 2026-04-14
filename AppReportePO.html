@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppReportePO — Constructor de Reportes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red: #D6FF02;
+      --red-d: #e2ff33;
+      --red-l: rgba(214, 255, 2, 0.1);
+      --ink: #0f0f0f;
+      --ink2: rgba(255,255,255,0.85);
+      --muted: #8AA1B1;
+      --line: rgba(255,255,255,0.07);
+      --bg: #01080E;
+      --card: rgba(2, 16, 28, 0.7);
+      --fb: #44B7A4;
+      --ig: #b18cff;
+      --reach: #2E86AB;
+      --leads: #D6FF02;
+      --inter: #44B7A4;
+      --fans: #D4A017;
+      --text: #FFFFFF;
+      --purp: #6127FF;
+      --blue: #44B7A4;
+      --r: 12px;
+      --sh: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background-color: #01080E; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: #01080E;
+      background-image: radial-gradient(circle at top right, rgba(97, 39, 255, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(68, 183, 164, 0.1) 0%, #01080E 50%);
+      background-attachment: scroll;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: rgba(2, 16, 28, 0.85);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      color: #fff;
+    }
+    .hdr-logo {
+      width: 32px; height: 32px;
+      background: var(--red);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .hdr-logo svg { width: 17px; height: 17px; fill: #fff; }
+    .hdr h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: #fff; letter-spacing: .02em;
+    }
+    .hdr h1 span { color: var(--red); }
+    .hdr-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* ── WRAP ── */
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 32px 36px; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: var(--sh);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+      border-left: 4px solid var(--red); padding-left: 12px;
+      color: white;
+    }
+
+    /* ── FORM GROUPS ── */
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    .fg label {
+      font-size: 11px; font-weight: 500;
+      color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+    }
+    input, .fg input, select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff !important; font-weight: 500;
+    }
+    input::placeholder { color: rgba(255,255,255,0.4) !important; font-weight: 400; }
+    input, .fg input {
+      border-radius: 8px; padding: 9px 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; outline: none; transition: border-color .2s; width: 100%;
+    }
+    select {
+      border-radius: 8px; padding: 9px 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; outline: none; transition: border-color .2s;
+      width: 100%; cursor: pointer;
+    }
+    select option { background: #02101c; color: #fff; }
+    .fg input:focus, select:focus { border-color: var(--purp); box-shadow: 0 0 0 3px rgba(97, 39, 255, 0.2); }
+
+    /* config grid */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr auto;
+      gap: 14px;
+      align-items: end;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all .18s; white-space: nowrap;
+    }
+    .btn-p {
+      background: var(--red); color: #02101C; font-weight: 700;
+    }
+    .btn-p:hover { background: var(--red-d); transform: translateY(-2px); box-shadow: 0 5px 20px rgba(214,255,2,0.2); }
+    .btn-k {
+      background: var(--purp); color: #fff; border-color: transparent;
+    }
+    .btn-k:hover { background: #713bff; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(97,39,255,0.25); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn:disabled { background: #1a1a2e; color: #444; cursor: not-allowed; transform: none !important; }
+
+    /* ── STATUS BAR ── */
+    .sb { padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; align-items: center; gap: 9px; margin-top: 12px; }
+    .sb.show { display: flex; }
+    .sb.info { background: rgba(97,39,255,0.2); color: #e2d4ff; }
+    .sb.err  { background: rgba(214,255,2,0.1); color: #D6FF02; }
+    .sb.ok   { background: rgba(214,255,2,0.15); color: #D6FF02; }
+    .sb.warn { background: rgba(255,180,0,0.15); color: #ffcc44; }
+    .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── REPORT HEADER ── */
+    #results { display: block; }
+    .r-head { margin-bottom: 18px; }
+    .r-head h2 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -.01em; }
+    .r-head p { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+    /* ── SUMMARY CARDS ── */
+    .sum-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+    .sc { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 22px 24px; }
+    .sc-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+    .sc-v { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; }
+
+    /* ── PLATFORM BLOCKS ── */
+    .platform-block {
+      background: rgba(255,255,255,0.015);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .platform-hdr {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px 24px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .platform-name-input {
+      font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+      background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.2);
+      color: #fff; outline: none; flex: 1; padding: 2px 0;
+    }
+    .platform-name-input:focus { border-bottom-color: var(--red); }
+    .platform-icon { font-size: 22px; }
+    .plat-logo {
+      width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .plat-logo.meta     { background: #1877F2; color: #fff; font-size: 18px; font-family: 'Georgia', serif; }
+    .plat-logo.tiktok   { background: #010101; color: #fff; font-size: 10px; border: 1px solid #333; }
+    .plat-logo.google   { background: #fff; color: #4285F4; font-size: 17px; }
+    .plat-logo.linkedin { background: #0A66C2; color: #fff; font-size: 13px; }
+    .plat-type-select {
+      font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+      background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.2);
+      color: #fff; outline: none; cursor: pointer; padding: 2px 4px 2px 0;
+      appearance: none; -webkit-appearance: none;
+    }
+    .plat-type-select:focus { border-bottom-color: #D6FF02; }
+    .plat-type-select option { background: #0d1e2e; color: #fff; font-size: 16px; }
+    .plat-del-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.35); border-radius: 6px;
+      width: 28px; height: 28px; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .plat-del-btn:hover { background: rgba(220,50,50,0.2); color: #ff6b6b; border-color: rgba(220,50,50,0.4); }
+    .platform-metric-labels {
+      display: flex; gap: 8px; align-items: center; padding: 10px 24px;
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);
+      flex-wrap: wrap;
+    }
+    .platform-summary {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    /* platform summary pill */
+    .plat-pill { background: rgba(68,183,164,0.07); border: 1px solid rgba(68,183,164,0.4); border-radius: 7px; padding: 8px 14px; min-width: 90px; }
+    .plat-pill.hl { background: rgba(214,255,2,0.08); border-color: rgba(214,255,2,0.4); }
+    .plat-pill .ppl { font-size: 10px; color: rgba(68,183,164,0.85); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+    .plat-pill.hl .ppl { color: rgba(214,255,2,0.75); }
+    .plat-pill .ppv { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: #fff; }
+    .plat-pill.hl .ppv { color: #D6FF02; }
+
+    /* Add platform button */
+    .add-platform-row { display: flex; justify-content: center; margin: 28px 0 16px; }
+
+    /* ── CAMPAIGN (sec-block) ── */
+    .sec-block {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--r);
+      margin: 14px;
+      overflow: hidden;
+      box-shadow: var(--sh);
+    }
+    .sec-hdr {
+      padding: 18px 24px;
+      display: flex; align-items: flex-start; gap: 12px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap; position: relative;
+    }
+    .sec-del-btn {
+      position: absolute; top: 10px; right: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.35);
+      border-radius: 6px; width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; transition: background .15s, color .15s; line-height: 1;
+    }
+    .sec-del-btn:hover { background: rgba(220,50,50,0.18); border-color: rgba(220,50,50,0.4); color: #ff6b6b; }
+    .sec-icon {
+      width: 38px; height: 38px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .sec-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; line-height: 1.3; }
+    .sec-sub { font-size: 12px; color: var(--muted); }
+    .sec-camp-metrics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0; }
+    .sec-camp-metric { background: rgba(68,183,164,0.07); border: 1px solid rgba(68,183,164,0.4); border-radius: 7px; padding: 6px 14px; min-width: 90px; }
+    .sec-camp-metric.hl { background: rgba(214,255,2,0.08); border-color: rgba(214,255,2,0.4); }
+    .sec-camp-metric.hl .scml { color: rgba(214,255,2,0.75); }
+    .sec-camp-metric.hl .scmv { color: #D6FF02; }
+    .scml { font-size: 10px; color: rgba(68,183,164,0.85); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+    .scmv { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+
+    /* campaign header info row */
+    .sec-hdr-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; padding-right: 36px; }
+
+    /* ── ADSET ── */
+    .adset-block { margin: 14px 14px 14px; border: 1px solid rgba(255,255,255,0.06); border-radius: 9px; overflow: hidden; }
+    .adset-hdr { padding: 14px 18px 0; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; }
+    .adset-name { font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .adset-name::before { content: ''; display: inline-block; width: 4px; height: 16px; background: var(--leads); border-radius: 2px; flex-shrink: 0; }
+    .adset-metrics { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 14px; }
+    .adset-metric { background: rgba(68,183,164,0.05); border: 1px solid rgba(68,183,164,0.4); border-radius: 7px; padding: 6px 12px; min-width: 90px; }
+    .adset-metric .aml { font-size: 9px; color: rgba(68,183,164,0.8); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+    .adset-metric .amv { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
+    .adset-metric.hl { background: rgba(214,255,2,0.07); border-color: rgba(214,255,2,0.35); }
+    .adset-metric.hl .aml { color: rgba(214,255,2,0.7); }
+    .adset-metric.hl .amv { color: #D6FF02; }
+
+    /* ── AD GRID ── */
+    .adset-grid {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    /* ── AD CARD ── */
+    .ad-card {
+      border: 1px solid rgba(255,255,255,0.05); border-radius: 9px;
+      overflow: hidden; background: rgba(255,255,255,0.03);
+      transition: box-shadow .17s; position: relative;
+    }
+    .ad-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.5); border-color: rgba(255,255,255,.15); }
+    .ad-thumb { width: 100%; aspect-ratio: 1; background: #111; overflow: hidden; position: relative; cursor: pointer; }
+    .ad-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .no-thumb {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px; color: var(--muted); font-size: 11px;
+      background: linear-gradient(135deg, #050e18, #01080E);
+    }
+    .no-thumb svg { width: 26px; height: 26px; opacity: .2; }
+    .thumb-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0); opacity: 0;
+      transition: opacity .2s, background .2s; z-index: 2;
+    }
+    .ad-thumb:hover .thumb-overlay { opacity: 1; background: rgba(0,0,0,0.45); }
+    .thumb-overlay svg { width: 28px; height: 28px; stroke: #fff; fill: none; stroke-width: 1.8; }
+
+    .ad-body { padding: 11px; }
+    .ad-name { font-size: 12px; font-weight: 500; line-height: 1.4; color: #fff; margin-bottom: 8px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+    .ad-ms { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .mb { background: rgba(255,255,255,0.04); border: none; border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 5px; padding: 6px 8px; }
+    .mb.hl { background: var(--red-l); border-color: rgba(214,255,2,0.2); }
+    .mb.hl .ml, .mb.hl .msub { color: rgba(214,255,2,0.7); }
+    .mb.hl .mv { color: var(--red); }
+    .ml { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .05em; }
+    .mv { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #fff; margin-top: 1px; }
+    .msub { font-size: 9px; color: rgba(255,255,255,0.35); }
+
+    /* ── CARD ACTIONS OVERLAY ── */
+    .card-actions {
+      display: flex; gap: 6px; margin-top: 8px;
+    }
+    .card-action-btn {
+      flex: 1; padding: 5px 0; border-radius: 6px;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; font-size: 11px; font-family: 'DM Sans', sans-serif;
+      font-weight: 500; transition: filter .15s;
+    }
+    .card-action-btn:hover { filter: brightness(1.2); }
+    .card-edit-btn { background: rgba(97,39,255,0.25); color: #c0a8ff; border: 1px solid rgba(97,39,255,0.4); }
+    .card-del-btn  { background: rgba(220,50,50,0.15); color: #ff8080; border: 1px solid rgba(220,50,50,0.3); }
+
+    /* ── CAMPAIGN METRIC LABELS ── */
+    .camp-metric-labels {
+      display: flex; gap: 12px; align-items: center;
+      padding: 10px 24px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+    .camp-metric-labels label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .camp-metric-label-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; border-radius: 6px;
+      padding: 4px 8px; font-size: 12px; width: 130px;
+      outline: none; font-family: 'DM Sans', sans-serif;
+    }
+    .camp-metric-label-input:focus { border-color: var(--purp); }
+
+    /* ── ICON PICKER ── */
+    .icon-picker { display: flex; gap: 4px; flex-wrap: wrap; }
+    .icon-opt {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; width: 30px; height: 30px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; transition: all .15s;
+    }
+    .icon-opt.active, .icon-opt:hover { background: rgba(214,255,2,0.15); border-color: rgba(214,255,2,0.4); }
+
+    /* ── COLOR PICKER ── */
+    .color-picker { display: flex; gap: 5px; align-items: center; }
+    .color-opt {
+      width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: transform .15s; flex-shrink: 0;
+    }
+    .color-opt.active, .color-opt:hover { transform: scale(1.35); border-color: rgba(255,255,255,0.5); }
+
+    /* ── EDITABLE NAME ── */
+    .editable-name {
+      background: transparent; border: none;
+      border-bottom: 1px dashed rgba(255,255,255,0.2);
+      color: inherit; font: inherit; outline: none;
+      cursor: text; min-width: 60px;
+    }
+    .editable-name:focus { border-bottom-color: var(--red); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 1000; display: flex;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-box {
+      background: #020f1c;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 28px;
+      width: 100%; max-width: 500px; max-height: 92vh; overflow-y: auto;
+    }
+    .modal-wide { max-width: 820px; }
+    .modal-two-col { display: grid; grid-template-columns: 1fr 260px; gap: 24px; align-items: start; }
+    .modal-form-col { min-width: 0; }
+    .modal-preview-col { position: sticky; top: 0; }
+    .modal-preview-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+    .modal-card-preview {
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 9px;
+      overflow: hidden; background: rgba(255,255,255,0.03);
+    }
+    .mcp-thumb {
+      width: 100%; aspect-ratio: 1; background: #0a1520;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .mcp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mcp-body { padding: 10px; }
+    .mcp-name { font-size: 12px; font-weight: 500; color: #fff; margin-bottom: 8px; line-height: 1.4;
+      overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .modal-title {
+      font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+      margin-bottom: 20px; border-left: 4px solid var(--red); padding-left: 12px;
+    }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .modal-full { grid-column: 1/-1; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    .modal-img-preview { width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
+    .modal-img-preview.show { display: block; }
+    @media(max-width:680px) { .modal-two-col { grid-template-columns: 1fr; } .modal-preview-col { order: -1; } }
+
+    /* ── ADD ROWS ── */
+    .add-adset-row { padding: 12px 14px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+    .adset-del-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.35); border-radius: 6px;
+      width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; cursor: pointer; transition: background .15s, color .15s; line-height: 1;
+      margin-left: auto; flex-shrink: 0;
+    }
+    .adset-del-btn:hover { background: rgba(220,50,50,0.18); border-color: rgba(220,50,50,0.4); color: #ff6b6b; }
+    .add-card-placeholder {
+      border: 2px dashed rgba(255,255,255,0.1); border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .2s; min-height: 80px; color: var(--muted);
+      font-size: 13px; gap: 8px;
+    }
+    .add-card-placeholder:hover { border-color: var(--purp); color: #fff; background: rgba(97,39,255,0.07); }
+
+    /* ── CONCLUSIONES ── */
+    #conclusionesText {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); color: #fff;
+      border-radius: 8px; padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      line-height: 1.6; resize: vertical; outline: none;
+      transition: border-color .2s;
+    }
+    #conclusionesText:focus { border-color: var(--purp); }
+
+    /* campaign metrics row */
+    .camp-metrics-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
+    .camp-metric { background: rgba(68,183,164,0.05); border: 1px solid rgba(68,183,164,0.4); border-radius: 7px; padding: 6px 12px; min-width: 80px; }
+    .camp-metric .cml { font-size: 9px; color: rgba(68,183,164,0.8); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+    .camp-metric .cmv { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
+    .camp-metric.hl { background: rgba(214,255,2,0.07); border-color: rgba(214,255,2,0.35); }
+    .camp-metric.hl .cml { color: rgba(214,255,2,0.7); }
+    .camp-metric.hl .cmv { color: #D6FF02; }
+    /* edit button */
+    .metrics-edit-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.4); border-radius: 6px;
+      width: 26px; height: 26px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s; flex-shrink: 0; margin-left: 4px;
+    }
+    .metrics-edit-btn:hover { background: rgba(214,255,2,0.1); border-color: rgba(214,255,2,0.4); color: #D6FF02; }
+    .metrics-reset-btn {
+      background: transparent; border: none; color: rgba(255,255,255,0.25);
+      cursor: pointer; font-size: 14px; padding: 0 4px; transition: color .15s;
+    }
+    .metrics-reset-btn:hover { color: #ff6b6b; }
+    /* inline edit form */
+    .metrics-edit-form {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end;
+      padding: 10px 0 6px;
+    }
+    .mef-field { display: flex; flex-direction: column; gap: 3px; }
+    .mef-field label { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .08em; }
+    .mef-field input {
+      width: 100px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; color: #fff; padding: 4px 8px; font-size: 13px; outline: none;
+    }
+    .mef-field input:focus { border-color: rgba(214,255,2,0.5); }
+    .mef-btns { display: flex; gap: 6px; align-items: flex-end; }
+    .mef-sep { width: 100%; border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 4px 0 2px; }
+    .mef-sec-label { font-size: 9px; color: rgba(97,39,255,0.7); text-transform: uppercase; letter-spacing: .1em; width: 100%; margin-bottom: 2px; }
+    .mef-field.text input { font-size: 12px; width: 130px; }
+    .mef-hl-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; width: 100%; margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .mef-hl-label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: .08em; margin-right: 2px; flex-shrink: 0; }
+    .mef-hl-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; padding: 3px 9px; font-size: 10px; color: rgba(255,255,255,0.35); cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+    .mef-hl-chip:hover { border-color: rgba(214,255,2,0.3); color: rgba(214,255,2,0.6); }
+    .mef-hl-chip.on { background: rgba(214,255,2,0.1); border-color: rgba(214,255,2,0.45); color: #D6FF02; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width: 768px) {
+      .wrap { padding: 16px; }
+      .card { padding: 18px; }
+      .sum-cards { grid-template-columns: 1fr 1fr; }
+      .sc-v { font-size: 22px; }
+      .adset-grid { grid-template-columns: 1fr 1fr; }
+      .r-head h2 { font-size: 24px; }
+      .hdr { padding: 12px 16px; }
+      .hdr-actions { gap: 5px; }
+      .btn { padding: 8px 12px; font-size: 12px; }
+      .config-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media(max-width: 480px) {
+      .wrap { padding: 10px; }
+      .sum-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .sc { padding: 14px 12px; }
+      .sc-v { font-size: 18px; }
+      .adset-grid { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
+      .modal-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+  </div>
+  <h1>App<span>Reporte</span>PO</h1>
+  <div class="hdr-actions">
+    <button class="btn btn-ghost" onclick="importJSON()" title="Importar JSON">📥 Importar</button>
+    <button class="btn btn-ghost" onclick="exportJSON()" title="Exportar JSON">📤 JSON</button>
+    <button class="btn btn-ghost" onclick="exportHTML()" title="Exportar reporte HTML">🌐 HTML</button>
+    <button class="btn btn-k" id="pdfBtn" onclick="makePDF()">📄 PDF</button>
+    <button class="btn btn-ghost" id="screenshotsBtn" onclick="makeScreenshots()">📸 Capturas</button>
+    <button class="btn btn-ghost" onclick="nuevoReporte()" title="Borrar todo y empezar desde cero" style="color:#ff8080;border-color:rgba(220,50,50,0.3)">🗑️ Nuevo</button>
+  </div>
+</header>
+
+<!-- HIDDEN FILE INPUTS -->
+<input type="file" id="jsonImportInput" accept=".json" style="display:none" onchange="onJSONImport(this)">
+<input type="file" id="imgUploadInput" accept="image/*" style="display:none" onchange="onImgUpload(this)">
+
+<div class="wrap">
+
+  <!-- ── CONFIG CARD ── -->
+  <div class="card" id="configCard">
+    <div class="card-title">⚙️ Configuración del Reporte</div>
+    <div class="config-grid">
+      <div class="fg">
+        <label>Cliente</label>
+        <input type="text" id="cfgClient" placeholder="Nombre del cliente" oninput="onConfigChange()">
+      </div>
+
+      <div class="fg">
+        <label>Fecha inicio</label>
+        <input type="date" id="cfgDf" oninput="onConfigChange()">
+      </div>
+      <div class="fg">
+        <label>Fecha fin</label>
+        <input type="date" id="cfgDt" oninput="onConfigChange()">
+      </div>
+      <div class="fg">
+        <label>Moneda</label>
+        <select id="cfgCurrency" onchange="onConfigChange()">
+          <option value="S/">S/ (Sol)</option>
+          <option value="US$">US$</option>
+          <option value="€">€ (Euro)</option>
+          <option value="$">$ (USD)</option>
+          <option value="MXN">MXN</option>
+          <option value="COP">COP</option>
+          <option value="CLP">CLP</option>
+          <option value="ARS">ARS</option>
+          <option value="R$">R$ (BRL)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS AREA ── -->
+  <div id="results">
+    <div class="r-head">
+      <h2 id="rT">Reporte Digital — Cliente</h2>
+      <p id="rM">&nbsp;</p>
+    </div>
+    <div id="secs"></div>
+    <div class="add-platform-row">
+      <button class="btn btn-p" onclick="addPlatform()">＋ Nueva Plataforma</button>
+    </div>
+    <!-- Conclusiones -->
+    <div class="card" style="margin-top:8px">
+      <div class="card-title">📝 Conclusiones / Recomendaciones</div>
+      <textarea id="conclusionesText" rows="6" placeholder="Escribe aquí las conclusiones y recomendaciones del reporte…" oninput="saveState()"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── STATUS BAR (for PDF/screenshots) ── -->
+<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:500;min-width:320px;max-width:90vw;pointer-events:none">
+  <div class="sb" id="sb">
+    <div class="spin" id="sp" style="display:none"></div>
+    <span id="st"></span>
+  </div>
+</div>
+
+<!-- ── CARD MODAL ── -->
+<div id="cardModal" style="display:none">
+  <div class="modal-overlay" onclick="onModalOverlayClick(event)">
+    <div class="modal-box modal-wide" onclick="event.stopPropagation()">
+      <div class="modal-title" id="modalTitle">Editar Tarjeta</div>
+      <div class="modal-two-col">
+
+        <!-- LEFT: form -->
+        <div class="modal-form-col">
+          <div class="modal-grid">
+            <div class="fg modal-full">
+              <label>Nombre del anuncio</label>
+              <input type="text" id="mName" placeholder="Nombre del anuncio" oninput="updateModalPreview()">
+            </div>
+            <div class="fg modal-full">
+              <label>Imagen (thumbnail)</label>
+              <button class="btn btn-ghost" type="button" onclick="document.getElementById('imgUploadInput').click()" style="width:100%;justify-content:center">🖼️ Subir imagen</button>
+              <img id="mImgPreview" class="modal-img-preview" alt="preview">
+            </div>
+            <div class="fg modal-full" style="border-top:1px solid rgba(255,255,255,0.07);padding-top:12px;margin-top:4px">
+              <label style="font-size:10px;color:var(--red);letter-spacing:.1em">MÉTRICAS PRINCIPALES (aparecen en verde)</label>
+            </div>
+            <div class="fg">
+              <label>Nombre Métrica 1</label>
+              <input type="text" id="mMetric1Label" placeholder="ej: Visualizaciones" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Valor Métrica 1</label>
+              <input type="text" id="mMetric1" placeholder="ej: 42,256 o US$ 0.005" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Nombre Métrica 2 <span style="color:var(--muted);font-weight:400">(subtexto)</span></label>
+              <input type="text" id="mMetric2Label" placeholder="ej: CPV" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Valor Métrica 2</label>
+              <input type="text" id="mMetric2" placeholder="ej: US$ 0.005 o 1,092" oninput="updateModalPreview()">
+            </div>
+            <div class="fg modal-full" style="border-top:1px solid rgba(255,255,255,0.07);padding-top:12px;margin-top:4px">
+              <label style="font-size:10px;color:var(--muted);letter-spacing:.1em">MÉTRICAS SECUNDARIAS</label>
+            </div>
+            <div class="fg">
+              <label>Invertido (Spend)</label>
+              <input type="number" id="mSpend" placeholder="0.00" min="0" step="0.01" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Impresiones</label>
+              <input type="number" id="mImpressions" placeholder="0" min="0" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Alcance (Reach)</label>
+              <input type="number" id="mReach" placeholder="0" min="0" oninput="updateModalPreview()">
+            </div>
+            <div class="fg">
+              <label>Clics</label>
+              <input type="number" id="mClicks" placeholder="0" min="0" oninput="updateModalPreview()">
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: live preview -->
+        <div class="modal-preview-col">
+          <div class="modal-preview-label">Vista previa de la tarjeta</div>
+          <div class="modal-card-preview" id="modalCardPreview">
+            <div class="mcp-thumb" id="mcpThumb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div class="mcp-body">
+              <div class="mcp-name" id="mcpName">Nombre del anuncio</div>
+              <div class="ad-ms" id="mcpMetrics"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-btns">
+        <button class="btn btn-ghost" onclick="closeCardModal()">Cancelar</button>
+        <button class="btn btn-p" onclick="saveCard()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────────────
+  // GLOBALS
+  // ─────────────────────────────────────────────────────────────────
+  let CLIENT_NAME = 'Cliente';
+  let CURRENCY = 'S/';
+
+  // ─────────────────────────────────────────────────────────────────
+  // FORMATTERS
+  // ─────────────────────────────────────────────────────────────────
+  const fmt = n => (n == null || n === '' || Number(n) === 0) ? '—' : Number(n).toLocaleString('es-PE');
+  const fmtS = n => {
+    if (n == null || n === '') return '—';
+    const val = Number(n);
+    if (val === 0) return '—';
+    const str = val.toFixed(2);
+    if (str === '0.00' && val !== 0) return `${CURRENCY} ${val.toFixed(3)}`;
+    return `${CURRENCY} ${str}`;
+  };
+  const fmtP = n => (n == null || n === '') ? '—' : `${Number(n).toFixed(2)}%`;
+  const fmtRaw = n => (n == null || n === '') ? '—' : Number(n).toLocaleString('es-PE');
+
+  // ─────────────────────────────────────────────────────────────────
+  // DATA MODEL
+  // ─────────────────────────────────────────────────────────────────
+  let state = {
+    clientName: 'Cliente',
+    agencyName: '',
+    df: '', dt: '',
+    currency: 'S/',
+    platforms: [],
+    conclusiones: ''
+  };
+
+  // platform: { id, name, m1Label, m2Label, campaigns[] }
+  // campaign: { id, name, icon, color, adsets[] }
+  // adset:    { id, name, ads[] }
+  // ad:       { id, name, img, status, spend, impressions, reach, clicks, metric1, metric2 }
+
+  const ICONS = ['📊','🎯','👁️','💬','👍','📣'];
+  const COLORS = ['#9b59b6','#2E86AB','#44B7A4','#D4A017','#e74c3c','#27ae60'];
+
+  const PLATFORM_TYPES = {
+    meta:     { name: 'Meta',     icon: '<div class="plat-logo meta">f</div>' },
+    tiktok:   { name: 'TikTok',   icon: '<div class="plat-logo tiktok">TT</div>' },
+    google:   { name: 'Google',   icon: '<div class="plat-logo google">G</div>' },
+    linkedin: { name: 'LinkedIn', icon: '<div class="plat-logo linkedin">in</div>' },
+  };
+
+  function uid() { return Math.random().toString(36).slice(2,9); }
+
+  // ─────────────────────────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────────────────────────
+  function findPlat(platId) { return state.platforms.find(p => p.id === platId); }
+  function findCamp(plat, campId) { return plat.campaigns.find(c => c.id === campId); }
+  function findAdset(camp, adsetId) { return camp.adsets.find(as => as.id === adsetId); }
+  function findAd(adset, adId) { return adset.ads.find(a => a.id === adId); }
+
+  // ─────────────────────────────────────────────────────────────────
+  // AGGREGATION
+  // ─────────────────────────────────────────────────────────────────
+  function aggAds(ads) {
+    let spend = 0, impressions = 0, reach = 0, clicks = 0, metric1 = 0, metric2 = 0;
+    for (const ad of ads) {
+      spend       += Number(ad.spend       || 0);
+      impressions += Number(ad.impressions || 0);
+      reach       += Number(ad.reach       || 0);
+      clicks      += Number(ad.clicks      || 0);
+      metric1     += Number(ad.metric1     || 0);
+      metric2     += Number(ad.metric2     || 0);
+    }
+    const cpm  = impressions > 0 ? spend / impressions * 1000 : 0;
+    const ctr  = impressions > 0 ? clicks / impressions * 100 : 0;
+    const freq = reach > 0 ? impressions / reach : 0;
+    const cpr  = metric1 > 0 ? spend / metric1 : 0;
+    return { spend, impressions, reach, clicks, metric1, metric2, cpm, ctr, freq, cpr };
+  }
+
+  function aggAdsets(adsets) {
+    const allAds = adsets.flatMap(as => as.ads);
+    return aggAds(allAds);
+  }
+
+  function effectiveAdsetMetrics(adset) {
+    const agg = aggAds(adset.ads);
+    const ov = adset.ov || {};
+    return {
+      spend:       ov.spend       ?? agg.spend,
+      reach:       ov.reach       ?? agg.reach,
+      impressions: ov.impressions ?? agg.impressions,
+      clicks:      ov.clicks      ?? agg.clicks,
+    };
+  }
+
+  function aggCampWithOv(camp) {
+    let spend = 0, reach = 0, impressions = 0, clicks = 0;
+    for (const adset of camp.adsets) {
+      const m = effectiveAdsetMetrics(adset);
+      spend += m.spend; reach += m.reach;
+      impressions += m.impressions; clicks += m.clicks;
+    }
+    const cpm  = impressions > 0 ? spend / impressions * 1000 : 0;
+    const ctr  = impressions > 0 ? clicks / impressions * 100 : 0;
+    const freq = reach > 0 ? impressions / reach : 0;
+    return { spend, reach, impressions, clicks, cpm, ctr, freq };
+  }
+
+  function effectiveCampMetrics(camp) {
+    const agg = aggCampWithOv(camp);
+    const ov = camp.ov || {};
+    return {
+      spend:       ov.spend       ?? agg.spend,
+      reach:       ov.reach       ?? agg.reach,
+      impressions: ov.impressions ?? agg.impressions,
+      clicks:      ov.clicks      ?? agg.clicks,
+    };
+  }
+
+  function aggPlatform(plat) {
+    let spend = 0, reach = 0, impressions = 0, clicks = 0;
+    for (const camp of plat.campaigns) {
+      const m = effectiveCampMetrics(camp);
+      spend += m.spend; reach += m.reach;
+      impressions += m.impressions; clicks += m.clicks;
+    }
+    const cpm  = impressions > 0 ? spend / impressions * 1000 : 0;
+    const ctr  = impressions > 0 ? clicks / impressions * 100 : 0;
+    const freq = reach > 0 ? impressions / reach : 0;
+    return { spend, reach, impressions, clicks, cpm, ctr, freq };
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // STATE PERSISTENCE
+  // ─────────────────────────────────────────────────────────────────
+  function saveState() {
+    const ct = document.getElementById('conclusionesText');
+    if (ct) state.conclusiones = ct.value;
+    localStorage.setItem('rpo_state', JSON.stringify(state));
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem('rpo_state');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+
+      // MIGRATION: old state had campaigns[] at top level, no platforms[]
+      if (Array.isArray(state.campaigns) && !Array.isArray(state.platforms)) {
+        const m1Label = state.campaigns[0]?.m1Label || '';
+        const m2Label = state.campaigns[0]?.m2Label || '';
+        // strip m1Label/m2Label from each campaign
+        const migratedCampaigns = state.campaigns.map(c => {
+          const { m1Label: _m1, m2Label: _m2, ...rest } = c;
+          return rest;
+        });
+        state.platforms = [{
+          id: uid(),
+          type: 'meta',
+          name: 'Meta',
+          m1Label: m1Label,
+          m2Label: m2Label,
+          campaigns: migratedCampaigns
+        }];
+        delete state.campaigns;
+        delete state.platform;
+      }
+
+      // Ensure platforms is always an array
+      if (!Array.isArray(state.platforms)) state.platforms = [];
+
+    } catch(e) { console.error('loadState error', e); }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CONFIG SYNC
+  // ─────────────────────────────────────────────────────────────────
+  function onConfigChange() {
+    state.clientName = document.getElementById('cfgClient').value || 'Cliente';
+    state.agencyName = document.getElementById('cfgAgency').value || '';
+    state.df = document.getElementById('cfgDf').value || '';
+    state.dt = document.getElementById('cfgDt').value || '';
+    state.currency = document.getElementById('cfgCurrency').value || 'S/';
+    CURRENCY = state.currency;
+    CLIENT_NAME = state.clientName;
+    updateHeader();
+    updateSummary();
+    saveState();
+  }
+
+  function applyConfigToUI() {
+    document.getElementById('cfgClient').value   = state.clientName || '';
+    document.getElementById('cfgAgency').value   = state.agencyName || '';
+    document.getElementById('cfgDf').value       = state.df || '';
+    document.getElementById('cfgDt').value       = state.dt || '';
+    document.getElementById('cfgCurrency').value = state.currency || 'S/';
+    CURRENCY    = state.currency || 'S/';
+    CLIENT_NAME = state.clientName || 'Cliente';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // HEADER & SUMMARY
+  // ─────────────────────────────────────────────────────────────────
+  function updateHeader() {
+    const n = state.clientName || 'Cliente';
+    document.getElementById('rT').textContent = `Reporte Digital — ${n}`;
+    let dateTxt = '';
+    if (state.df && state.dt) {
+      dateTxt = `${fmtDate(state.df)} → ${fmtDate(state.dt)}`;
+    } else if (state.df) {
+      dateTxt = `Desde ${fmtDate(state.df)}`;
+    } else if (state.dt) {
+      dateTxt = `Hasta ${fmtDate(state.dt)}`;
+    }
+    if (state.agencyName) dateTxt = (dateTxt ? dateTxt + '  ·  ' : '') + state.agencyName;
+    document.getElementById('rM').textContent = dateTxt || ' ';
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y,m,dd] = d.split('-');
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${parseInt(dd)} ${months[parseInt(m)-1]} ${y}`;
+  }
+
+  function updateSummary() { /* no global summary — each platform has its own */ }
+
+  // ─────────────────────────────────────────────────────────────────
+  // FULL RENDER
+  // ─────────────────────────────────────────────────────────────────
+  function render() {
+    const scrollY = window.scrollY;
+
+    updateHeader();
+    updateSummary();
+
+    const secs = document.getElementById('secs');
+    secs.innerHTML = '';
+    for (const plat of state.platforms) {
+      secs.appendChild(renderPlatform(plat));
+    }
+
+    const ct = document.getElementById('conclusionesText');
+    if (ct && state.conclusiones) ct.value = state.conclusiones;
+
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // PLATFORM RENDER
+  // ─────────────────────────────────────────────────────────────────
+  function effectivePlatMetrics(plat) {
+    const agg = aggPlatform(plat);
+    const ov = plat.ov || {};
+    return {
+      spend:       ov.spend       ?? agg.spend,
+      reach:       ov.reach       ?? agg.reach,
+      impressions: ov.impressions ?? agg.impressions,
+      clicks:      ov.clicks      ?? agg.clicks,
+    };
+  }
+
+  function buildPlatSummary(plat) {
+    const m = effectivePlatMetrics(plat);
+    const cpm  = m.impressions > 0 ? m.spend / m.impressions * 1000 : 0;
+    const freq = m.reach > 0 ? m.impressions / m.reach : 0;
+    const ctr  = m.impressions > 0 ? m.clicks / m.impressions * 100 : 0;
+    const hasOv = plat.ov && Object.keys(plat.ov).length > 0;
+    const hl = plat.hl || {};
+    const mx = plat.mx || {};
+    const pills = [
+      { k: 'spend',       l: 'Invertido',   v: fmtS(m.spend) },
+      { k: 'reach',       l: 'Alcance',     v: fmtRaw(m.reach) },
+      { k: 'impressions', l: 'Impresiones', v: fmtRaw(m.impressions) },
+      ...(cpm > 0  ? [{ k: 'cpm',  l: 'CPM',       v: fmtS(cpm) }] : []),
+      ...(freq > 0 ? [{ k: 'freq', l: 'Frecuencia', v: freq.toFixed(2) }] : []),
+      ...(ctr > 0  ? [{ k: 'ctr',  l: 'CTR',        v: fmtP(ctr) }] : []),
+      ...(mx.m1Value ? [{ k: 'm1', l: mx.m1Label || 'Métrica 1', v: mx.m1Value }] : []),
+      ...(mx.m2Value ? [{ k: 'm2', l: mx.m2Label || 'Métrica 2', v: mx.m2Value }] : []),
+    ];
+    const sorted = [...pills].sort((a, b) => (hl[b.k]?1:0) - (hl[a.k]?1:0));
+    const pillsHTML = sorted.map(p =>
+      `<div class="plat-pill${hl[p.k]?' hl':''}"><div class="ppl">${p.l}</div><div class="ppv">${p.v}</div></div>`
+    ).join('');
+    const resetBtn = hasOv ? `<button class="metrics-reset-btn" onclick="resetPlatOv('${plat.id}')" title="Restaurar automático">↺</button>` : '';
+    return `${pillsHTML}<button class="metrics-edit-btn" onclick="showPlatEdit('${plat.id}')" title="Editar totales">✏️</button>${resetBtn}`;
+  }
+
+  function showPlatEdit(platId) {
+    const plat = findPlat(platId);
+    const m = effectivePlatMetrics(plat);
+    const hl = plat.hl || {};
+    const mx = plat.mx || {};
+    const el = document.getElementById(`platSummary_${platId}`);
+    if (!el) return;
+    el.innerHTML = `
+      <div class="metrics-edit-form">
+        <div class="mef-field"><label>Invertido</label><input type="number" id="ped_spend_${platId}" value="${m.spend.toFixed(2)}" step="0.01"></div>
+        <div class="mef-field"><label>Alcance</label><input type="number" id="ped_reach_${platId}" value="${m.reach}"></div>
+        <div class="mef-field"><label>Impresiones</label><input type="number" id="ped_impr_${platId}" value="${m.impressions}"></div>
+        <div class="mef-field"><label>Clics</label><input type="number" id="ped_clicks_${platId}" value="${m.clicks}"></div>
+        <div class="mef-btns">
+          <button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="savePlatOv('${platId}')">✓ Guardar</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="cancelPlatEdit('${platId}')">✕</button>
+        </div>
+        <hr class="mef-sep">
+        <span class="mef-sec-label">Métricas personalizadas</span>
+        <div class="mef-field text"><label>Nombre M1</label><input type="text" id="ped_m1lbl_${platId}" placeholder="ej: Visualizaciones" value="${esc(mx.m1Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M1</label><input type="text" id="ped_m1val_${platId}" placeholder="ej: 42,256" value="${esc(mx.m1Value||'')}"></div>
+        <div class="mef-field text"><label>Nombre M2</label><input type="text" id="ped_m2lbl_${platId}" placeholder="ej: CPV" value="${esc(mx.m2Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M2</label><input type="text" id="ped_m2val_${platId}" placeholder="ej: S/ 0.005" value="${esc(mx.m2Value||'')}"></div>
+        <div class="mef-hl-row">
+          <span class="mef-hl-label">Verde:</span>
+          <button class="mef-hl-chip${hl.spend?' on':''}" onclick="this.classList.toggle('on')" data-hl="spend">Invertido</button>
+          <button class="mef-hl-chip${hl.reach?' on':''}" onclick="this.classList.toggle('on')" data-hl="reach">Alcance</button>
+          <button class="mef-hl-chip${hl.impressions?' on':''}" onclick="this.classList.toggle('on')" data-hl="impressions">Impresiones</button>
+          <button class="mef-hl-chip${hl.cpm?' on':''}" onclick="this.classList.toggle('on')" data-hl="cpm">CPM</button>
+          <button class="mef-hl-chip${hl.freq?' on':''}" onclick="this.classList.toggle('on')" data-hl="freq">Frecuencia</button>
+          <button class="mef-hl-chip${hl.ctr?' on':''}" onclick="this.classList.toggle('on')" data-hl="ctr">CTR</button>
+          <button class="mef-hl-chip${hl.m1?' on':''}" onclick="this.classList.toggle('on')" data-hl="m1">M1</button>
+          <button class="mef-hl-chip${hl.m2?' on':''}" onclick="this.classList.toggle('on')" data-hl="m2">M2</button>
+        </div>
+      </div>`;
+  }
+
+  function savePlatOv(platId) {
+    const plat = findPlat(platId);
+    const hlChips = document.querySelectorAll(`#platSummary_${platId} .mef-hl-chip`);
+    plat.hl = {};
+    hlChips.forEach(c => { if (c.classList.contains('on')) plat.hl[c.dataset.hl] = true; });
+    const pm1lbl = document.getElementById(`ped_m1lbl_${platId}`)?.value.trim();
+    const pm1val = document.getElementById(`ped_m1val_${platId}`)?.value.trim();
+    const pm2lbl = document.getElementById(`ped_m2lbl_${platId}`)?.value.trim();
+    const pm2val = document.getElementById(`ped_m2val_${platId}`)?.value.trim();
+    plat.mx = { m1Label: pm1lbl||'', m1Value: pm1val||'', m2Label: pm2lbl||'', m2Value: pm2val||'' };
+    plat.ov = {
+      spend:       parseFloat(document.getElementById(`ped_spend_${platId}`)?.value) || 0,
+      reach:       parseInt(document.getElementById(`ped_reach_${platId}`)?.value) || 0,
+      impressions: parseInt(document.getElementById(`ped_impr_${platId}`)?.value) || 0,
+      clicks:      parseInt(document.getElementById(`ped_clicks_${platId}`)?.value) || 0,
+    };
+    saveState();
+    const el = document.getElementById(`platSummary_${platId}`);
+    if (el) el.innerHTML = buildPlatSummary(plat);
+  }
+
+  function cancelPlatEdit(platId) {
+    const plat = findPlat(platId);
+    const el = document.getElementById(`platSummary_${platId}`);
+    if (el) el.innerHTML = buildPlatSummary(plat);
+  }
+
+  function resetPlatOv(platId) {
+    const plat = findPlat(platId);
+    plat.ov = null;
+    saveState();
+    const el = document.getElementById(`platSummary_${platId}`);
+    if (el) el.innerHTML = buildPlatSummary(plat);
+  }
+
+  function renderPlatform(plat) {
+    const el = document.createElement('div');
+    el.className = 'platform-block';
+    el.dataset.platId = plat.id;
+
+    el.innerHTML = `
+      <div class="platform-hdr">
+        ${PLATFORM_TYPES[plat.type]?.icon || PLATFORM_TYPES.meta.icon}
+        <select class="plat-type-select" onchange="setPlatType('${plat.id}', this.value)">
+          ${Object.entries(PLATFORM_TYPES).map(([k,v]) => `<option value="${k}"${plat.type===k?' selected':''}>${v.name}</option>`).join('')}
+        </select>
+        <button class="plat-del-btn" onclick="deletePlatform('${plat.id}')" title="Eliminar plataforma">✕</button>
+      </div>
+      <div class="platform-summary" id="platSummary_${plat.id}">${buildPlatSummary(plat)}</div>
+      <div id="platCamps_${plat.id}"></div>
+      <div class="add-adset-row">
+        <button class="btn btn-k" onclick="addCampaign('${plat.id}')">＋ Nueva Campaña</button>
+      </div>
+    `;
+
+    const campsContainer = el.querySelector(`#platCamps_${plat.id}`);
+    for (const camp of plat.campaigns) {
+      campsContainer.appendChild(renderCampaign(plat, camp));
+    }
+
+    return el;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAMPAIGN RENDER
+  // ─────────────────────────────────────────────────────────────────
+  function renderCampaign(plat, camp) {
+    const el = document.createElement('div');
+    el.className = 'sec-block';
+    el.dataset.campId = camp.id;
+
+    const iconPickerHTML = ICONS.map(ic =>
+      `<button class="icon-opt${camp.icon===ic?' active':''}" onclick="setCampIcon('${plat.id}','${camp.id}','${ic}')">${ic}</button>`
+    ).join('');
+
+    const colorPickerHTML = COLORS.map(cl =>
+      `<button class="color-opt${camp.color===cl?' active':''}" style="background:${cl}" onclick="setCampColor('${plat.id}','${camp.id}','${cl}')" title="${cl}"></button>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-icon" style="background:${camp.color}22">${camp.icon}</div>
+        <div class="sec-hdr-info">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="icon-picker">${iconPickerHTML}</div>
+            <div class="color-picker">${colorPickerHTML}</div>
+          </div>
+          <input class="editable-name sec-name" type="text" value="${esc(camp.name)}"
+            style="margin-top:6px;font-size:18px;font-family:'Syne',sans-serif;font-weight:700;"
+            onchange="setCampName('${plat.id}','${camp.id}',this.value)"
+            oninput="setCampName('${plat.id}','${camp.id}',this.value)">
+        </div>
+        <button class="sec-del-btn" onclick="deleteCampaign('${plat.id}','${camp.id}')" title="Eliminar campaña">✕</button>
+      </div>
+      <div class="camp-metrics-row" id="campMetrics_${camp.id}"></div>
+      <div id="adsets_${camp.id}"></div>
+      <div class="add-adset-row">
+        <button class="btn btn-k" onclick="addAdset('${plat.id}','${camp.id}')" style="font-size:12px;padding:7px 14px">＋ Ad Set</button>
+      </div>
+    `;
+
+    el.querySelector(`#campMetrics_${camp.id}`).innerHTML = buildCampMetricsHTML(plat, camp);
+
+    const adsetContainer = el.querySelector(`#adsets_${camp.id}`);
+    for (const adset of camp.adsets) {
+      adsetContainer.appendChild(renderAdset(plat, camp, adset));
+    }
+
+    return el;
+  }
+
+  function buildCampMetrics(plat, agg) {
+    const pills = [
+      { l: 'Invertido', v: fmtS(agg.spend), hl: false },
+      ...(plat.m1Label && agg.metric1 > 0 ? [{ l: plat.m1Label, v: fmtRaw(agg.metric1), hl: true }] : []),
+      ...(plat.m2Label && agg.metric2 > 0 ? [{ l: plat.m2Label, v: fmtRaw(agg.metric2), hl: true }] : []),
+      { l: 'Alcance', v: fmtRaw(agg.reach), hl: false },
+      { l: 'Impresiones', v: fmtRaw(agg.impressions), hl: false },
+      ...(agg.cpm > 0 ? [{ l: 'CPM', v: fmtS(agg.cpm), hl: false }] : []),
+      ...(agg.freq > 0 ? [{ l: 'Frecuencia', v: agg.freq.toFixed(2), hl: false }] : []),
+      ...(agg.ctr > 0 ? [{ l: 'CTR', v: fmtP(agg.ctr), hl: false }] : []),
+    ];
+    return pills.map(p =>
+      `<div class="sec-camp-metric${p.hl?' hl':''}"><div class="scml">${p.l}</div><div class="scmv">${p.v}</div></div>`
+    ).join('');
+  }
+
+  function buildCampMetricsHTML(plat, camp) {
+    const m = effectiveCampMetrics(camp);
+    const cpm  = m.impressions > 0 ? m.spend / m.impressions * 1000 : 0;
+    const freq = m.reach > 0 ? m.impressions / m.reach : 0;
+    const hasOv = camp.ov && Object.keys(camp.ov).length > 0;
+    if (m.spend === 0 && m.reach === 0 && m.impressions === 0) return '';
+    const hl = camp.hl || {};
+    const mx = camp.mx || {};
+    const pills = [
+      { k: 'spend',       l: 'Invertido',   v: fmtS(m.spend) },
+      { k: 'reach',       l: 'Alcance',     v: fmtRaw(m.reach) },
+      { k: 'impressions', l: 'Impresiones', v: fmtRaw(m.impressions) },
+      ...(cpm > 0  ? [{ k: 'cpm',  l: 'CPM',   v: fmtS(cpm) }] : []),
+      ...(freq > 0 ? [{ k: 'freq', l: 'Frec.', v: freq.toFixed(2) }] : []),
+    ];
+    const mxPills = [
+      ...(mx.m1Value ? [{ k: 'm1', l: mx.m1Label || 'Métrica 1', v: mx.m1Value }] : []),
+      ...(mx.m2Value ? [{ k: 'm2', l: mx.m2Label || 'Métrica 2', v: mx.m2Value }] : []),
+    ];
+    const allPills = [...pills, ...mxPills].sort((a, b) => (hl[b.k]?1:0) - (hl[a.k]?1:0));
+    const pillsHTML = allPills.map(p =>
+      `<div class="camp-metric${hl[p.k]?' hl':''}"><div class="cml">${esc(p.l)}</div><div class="cmv">${esc(p.v)}</div></div>`
+    ).join('');
+    const resetBtn = hasOv ? `<button class="metrics-reset-btn" onclick="resetCampOv('${plat.id}','${camp.id}')" title="Restaurar automático">↺</button>` : '';
+    return `${pillsHTML}<button class="metrics-edit-btn" onclick="showCampEdit('${plat.id}','${camp.id}')" title="Editar totales">✏️</button>${resetBtn}`;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // ADSET RENDER
+  // ─────────────────────────────────────────────────────────────────
+  function renderAdset(plat, camp, adset) {
+    const el = document.createElement('div');
+    el.className = 'adset-block';
+    el.dataset.adsetId = adset.id;
+
+    const adsetMetrics = buildAdsetMetricsHTML(plat, camp, adset);
+
+    el.innerHTML = `
+      <div class="adset-hdr">
+        <div class="adset-name">
+          <input class="editable-name" type="text" value="${esc(adset.name)}"
+            style="font-size:15px;font-weight:700;"
+            onchange="setAdsetName('${plat.id}','${camp.id}','${adset.id}',this.value)"
+            oninput="setAdsetName('${plat.id}','${camp.id}','${adset.id}',this.value)">
+          <button class="adset-del-btn" onclick="deleteAdset('${plat.id}','${camp.id}','${adset.id}')" title="Eliminar adset">✕</button>
+        </div>
+        <div class="adset-metrics" id="adsetMetrics_${adset.id}">${adsetMetrics}</div>
+      </div>
+      <div class="adset-grid" id="adGrid_${adset.id}"></div>
+    `;
+
+    const grid = el.querySelector(`#adGrid_${adset.id}`);
+    for (const ad of adset.ads) {
+      grid.appendChild(renderCard(plat, camp, adset, ad));
+    }
+    // add placeholder
+    const placeholder = document.createElement('div');
+    placeholder.className = 'add-card-placeholder';
+    placeholder.innerHTML = `<span>＋</span><span>Nueva tarjeta</span>`;
+    placeholder.onclick = () => addCard(plat.id, camp.id, adset.id);
+    grid.appendChild(placeholder);
+
+    return el;
+  }
+
+  function buildAdsetMetrics(plat, agg) {
+    const pills = [
+      { l: 'Invertido', v: fmtS(agg.spend), hl: false },
+      { l: 'Alcance', v: fmtRaw(agg.reach), hl: false },
+      { l: 'Impresiones', v: fmtRaw(agg.impressions), hl: false },
+      ...(agg.cpm > 0 ? [{ l: 'CPM', v: fmtS(agg.cpm), hl: false }] : []),
+      ...(agg.freq > 0 ? [{ l: 'Frec.', v: agg.freq.toFixed(2), hl: false }] : []),
+    ];
+    return pills.map(p =>
+      `<div class="adset-metric${p.hl?' hl':''}"><div class="aml">${p.l}</div><div class="amv">${p.v}</div></div>`
+    ).join('');
+  }
+
+  function buildAdsetMetricsHTML(plat, camp, adset) {
+    const m = effectiveAdsetMetrics(adset);
+    const cpm  = m.impressions > 0 ? m.spend / m.impressions * 1000 : 0;
+    const freq = m.reach > 0 ? m.impressions / m.reach : 0;
+    const hasOv = adset.ov && Object.keys(adset.ov).length > 0;
+    if (m.spend === 0 && m.reach === 0 && m.impressions === 0) return '';
+    const hl = adset.hl || {};
+    const mx = adset.mx || {};
+    const pills = [
+      { k: 'spend',       l: 'Invertido',   v: fmtS(m.spend) },
+      { k: 'reach',       l: 'Alcance',     v: fmtRaw(m.reach) },
+      { k: 'impressions', l: 'Impresiones', v: fmtRaw(m.impressions) },
+      ...(cpm > 0  ? [{ k: 'cpm',  l: 'CPM',   v: fmtS(cpm) }] : []),
+      ...(freq > 0 ? [{ k: 'freq', l: 'Frec.', v: freq.toFixed(2) }] : []),
+    ];
+    const mxPills = [
+      ...(mx.m1Value ? [{ k: 'm1', l: mx.m1Label || 'Métrica 1', v: mx.m1Value }] : []),
+      ...(mx.m2Value ? [{ k: 'm2', l: mx.m2Label || 'Métrica 2', v: mx.m2Value }] : []),
+    ];
+    const allPills = [...pills, ...mxPills].sort((a, b) => (hl[b.k]?1:0) - (hl[a.k]?1:0));
+    const pillsHTML = allPills.map(p =>
+      `<div class="adset-metric${hl[p.k]?' hl':''}"><div class="aml">${esc(p.l)}</div><div class="amv">${esc(p.v)}</div></div>`
+    ).join('');
+    const resetBtn = hasOv ? `<button class="metrics-reset-btn" onclick="resetAdsetOv('${plat.id}','${camp.id}','${adset.id}')" title="Restaurar automático">↺</button>` : '';
+    return `${pillsHTML}<button class="metrics-edit-btn" onclick="showAdsetEdit('${plat.id}','${camp.id}','${adset.id}')" title="Editar totales">✏️</button>${resetBtn}`;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAMPAIGN / ADSET HIGHLIGHT TOGGLE
+  // ─────────────────────────────────────────────────────────────────
+  function toggleCampHL(platId, campId, key) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    if (!camp.hl) camp.hl = {};
+    camp.hl[key] = !camp.hl[key];
+    saveState();
+  }
+
+  function toggleAdsetHL(platId, campId, adsetId, key) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const adset = findAdset(camp, adsetId);
+    if (!adset.hl) adset.hl = {};
+    adset.hl[key] = !adset.hl[key];
+    saveState();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAMPAIGN / ADSET OVERRIDE EDIT FUNCTIONS
+  // ─────────────────────────────────────────────────────────────────
+  function showCampEdit(platId, campId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const m = effectiveCampMetrics(camp);
+    const hl = camp.hl || {};
+    const mx = camp.mx || {};
+    const el = document.getElementById(`campMetrics_${campId}`);
+    if (!el) return;
+    el.innerHTML = `
+      <div class="metrics-edit-form">
+        <div class="mef-field"><label>Invertido</label><input type="number" id="ced_spend_${campId}" value="${m.spend.toFixed(2)}" step="0.01"></div>
+        <div class="mef-field"><label>Alcance</label><input type="number" id="ced_reach_${campId}" value="${m.reach}"></div>
+        <div class="mef-field"><label>Impresiones</label><input type="number" id="ced_impr_${campId}" value="${m.impressions}"></div>
+        <div class="mef-field"><label>Clics</label><input type="number" id="ced_clicks_${campId}" value="${m.clicks}"></div>
+        <div class="mef-btns">
+          <button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="saveCampOv('${platId}','${campId}')">✓ Guardar</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="cancelCampEdit('${platId}','${campId}')">✕</button>
+        </div>
+        <hr class="mef-sep">
+        <span class="mef-sec-label">Métricas personalizadas</span>
+        <div class="mef-field text"><label>Nombre M1</label><input type="text" id="ced_m1lbl_${campId}" placeholder="ej: Visualizaciones" value="${esc(mx.m1Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M1</label><input type="text" id="ced_m1val_${campId}" placeholder="ej: 42,256" value="${esc(mx.m1Value||'')}"></div>
+        <div class="mef-field text"><label>Nombre M2</label><input type="text" id="ced_m2lbl_${campId}" placeholder="ej: CPV" value="${esc(mx.m2Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M2</label><input type="text" id="ced_m2val_${campId}" placeholder="ej: S/ 0.005" value="${esc(mx.m2Value||'')}"></div>
+        <div class="mef-hl-row">
+          <span class="mef-hl-label">Verde:</span>
+          <button class="mef-hl-chip${hl.spend?' on':''}" onclick="this.classList.toggle('on')" data-hl="spend">Invertido</button>
+          <button class="mef-hl-chip${hl.reach?' on':''}" onclick="this.classList.toggle('on')" data-hl="reach">Alcance</button>
+          <button class="mef-hl-chip${hl.impressions?' on':''}" onclick="this.classList.toggle('on')" data-hl="impressions">Impresiones</button>
+          <button class="mef-hl-chip${hl.cpm?' on':''}" onclick="this.classList.toggle('on')" data-hl="cpm">CPM</button>
+          <button class="mef-hl-chip${hl.freq?' on':''}" onclick="this.classList.toggle('on')" data-hl="freq">Frec.</button>
+          <button class="mef-hl-chip${hl.m1?' on':''}" onclick="this.classList.toggle('on')" data-hl="m1">M1</button>
+          <button class="mef-hl-chip${hl.m2?' on':''}" onclick="this.classList.toggle('on')" data-hl="m2">M2</button>
+        </div>
+      </div>`;
+  }
+
+  function saveCampOv(platId, campId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    camp.ov = {
+      spend:       parseFloat(document.getElementById(`ced_spend_${campId}`)?.value) || 0,
+      reach:       parseInt(document.getElementById(`ced_reach_${campId}`)?.value) || 0,
+      impressions: parseInt(document.getElementById(`ced_impr_${campId}`)?.value) || 0,
+      clicks:      parseInt(document.getElementById(`ced_clicks_${campId}`)?.value) || 0,
+    };
+    const hlChips = document.querySelectorAll(`#campMetrics_${campId} .mef-hl-chip`);
+    camp.hl = {};
+    hlChips.forEach(c => { if (c.classList.contains('on')) camp.hl[c.dataset.hl] = true; });
+    const m1lbl = document.getElementById(`ced_m1lbl_${campId}`)?.value.trim();
+    const m1val = document.getElementById(`ced_m1val_${campId}`)?.value.trim();
+    const m2lbl = document.getElementById(`ced_m2lbl_${campId}`)?.value.trim();
+    const m2val = document.getElementById(`ced_m2val_${campId}`)?.value.trim();
+    camp.mx = { m1Label: m1lbl||'', m1Value: m1val||'', m2Label: m2lbl||'', m2Value: m2val||'' };
+    saveState();
+    const el = document.getElementById(`campMetrics_${campId}`);
+    if (el) el.innerHTML = buildCampMetricsHTML(plat, camp);
+    refreshPlatSummary(platId);
+  }
+
+  function cancelCampEdit(platId, campId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const el = document.getElementById(`campMetrics_${campId}`);
+    if (el) el.innerHTML = buildCampMetricsHTML(plat, camp);
+  }
+
+  function resetCampOv(platId, campId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    camp.ov = null;
+    saveState();
+    const el = document.getElementById(`campMetrics_${campId}`);
+    if (el) el.innerHTML = buildCampMetricsHTML(plat, camp);
+    refreshPlatSummary(platId);
+  }
+
+  function showAdsetEdit(platId, campId, adsetId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const adset = findAdset(camp, adsetId);
+    const m = effectiveAdsetMetrics(adset);
+    const hl = adset.hl || {};
+    const mx = adset.mx || {};
+    const el = document.getElementById(`adsetMetrics_${adsetId}`);
+    if (!el) return;
+    el.innerHTML = `
+      <div class="metrics-edit-form">
+        <div class="mef-field"><label>Invertido</label><input type="number" id="aed_spend_${adsetId}" value="${m.spend.toFixed(2)}" step="0.01"></div>
+        <div class="mef-field"><label>Alcance</label><input type="number" id="aed_reach_${adsetId}" value="${m.reach}"></div>
+        <div class="mef-field"><label>Impresiones</label><input type="number" id="aed_impr_${adsetId}" value="${m.impressions}"></div>
+        <div class="mef-field"><label>Clics</label><input type="number" id="aed_clicks_${adsetId}" value="${m.clicks}"></div>
+        <div class="mef-btns">
+          <button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="saveAdsetOv('${platId}','${campId}','${adsetId}')">✓ Guardar</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="cancelAdsetEdit('${platId}','${campId}','${adsetId}')">✕</button>
+        </div>
+        <hr class="mef-sep">
+        <span class="mef-sec-label">Métricas personalizadas</span>
+        <div class="mef-field text"><label>Nombre M1</label><input type="text" id="aed_m1lbl_${adsetId}" placeholder="ej: Visualizaciones" value="${esc(mx.m1Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M1</label><input type="text" id="aed_m1val_${adsetId}" placeholder="ej: 42,256" value="${esc(mx.m1Value||'')}"></div>
+        <div class="mef-field text"><label>Nombre M2</label><input type="text" id="aed_m2lbl_${adsetId}" placeholder="ej: CPV" value="${esc(mx.m2Label||'')}"></div>
+        <div class="mef-field text"><label>Valor M2</label><input type="text" id="aed_m2val_${adsetId}" placeholder="ej: S/ 0.005" value="${esc(mx.m2Value||'')}"></div>
+        <div class="mef-hl-row">
+          <span class="mef-hl-label">Verde:</span>
+          <button class="mef-hl-chip${hl.spend?' on':''}" onclick="this.classList.toggle('on')" data-hl="spend">Invertido</button>
+          <button class="mef-hl-chip${hl.reach?' on':''}" onclick="this.classList.toggle('on')" data-hl="reach">Alcance</button>
+          <button class="mef-hl-chip${hl.impressions?' on':''}" onclick="this.classList.toggle('on')" data-hl="impressions">Impresiones</button>
+          <button class="mef-hl-chip${hl.cpm?' on':''}" onclick="this.classList.toggle('on')" data-hl="cpm">CPM</button>
+          <button class="mef-hl-chip${hl.freq?' on':''}" onclick="this.classList.toggle('on')" data-hl="freq">Frec.</button>
+          <button class="mef-hl-chip${hl.m1?' on':''}" onclick="this.classList.toggle('on')" data-hl="m1">M1</button>
+          <button class="mef-hl-chip${hl.m2?' on':''}" onclick="this.classList.toggle('on')" data-hl="m2">M2</button>
+        </div>
+      </div>`;
+  }
+
+  function saveAdsetOv(platId, campId, adsetId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const adset = findAdset(camp, adsetId);
+    adset.ov = {
+      spend:       parseFloat(document.getElementById(`aed_spend_${adsetId}`)?.value) || 0,
+      reach:       parseInt(document.getElementById(`aed_reach_${adsetId}`)?.value) || 0,
+      impressions: parseInt(document.getElementById(`aed_impr_${adsetId}`)?.value) || 0,
+      clicks:      parseInt(document.getElementById(`aed_clicks_${adsetId}`)?.value) || 0,
+    };
+    const hlChips = document.querySelectorAll(`#adsetMetrics_${adsetId} .mef-hl-chip`);
+    adset.hl = {};
+    hlChips.forEach(c => { if (c.classList.contains('on')) adset.hl[c.dataset.hl] = true; });
+    const m1lbl = document.getElementById(`aed_m1lbl_${adsetId}`)?.value.trim();
+    const m1val = document.getElementById(`aed_m1val_${adsetId}`)?.value.trim();
+    const m2lbl = document.getElementById(`aed_m2lbl_${adsetId}`)?.value.trim();
+    const m2val = document.getElementById(`aed_m2val_${adsetId}`)?.value.trim();
+    adset.mx = { m1Label: m1lbl||'', m1Value: m1val||'', m2Label: m2lbl||'', m2Value: m2val||'' };
+    saveState();
+    const el = document.getElementById(`adsetMetrics_${adsetId}`);
+    if (el) el.innerHTML = buildAdsetMetricsHTML(plat, camp, adset);
+    const campEl = document.getElementById(`campMetrics_${campId}`);
+    if (campEl) campEl.innerHTML = buildCampMetricsHTML(plat, camp);
+    refreshPlatSummary(platId);
+  }
+
+  function cancelAdsetEdit(platId, campId, adsetId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const adset = findAdset(camp, adsetId);
+    const el = document.getElementById(`adsetMetrics_${adsetId}`);
+    if (el) el.innerHTML = buildAdsetMetricsHTML(plat, camp, adset);
+  }
+
+  function resetAdsetOv(platId, campId, adsetId) {
+    const plat = findPlat(platId);
+    const camp = findCamp(plat, campId);
+    const adset = findAdset(camp, adsetId);
+    adset.ov = null;
+    saveState();
+    const el = document.getElementById(`adsetMetrics_${adsetId}`);
+    if (el) el.innerHTML = buildAdsetMetricsHTML(plat, camp, adset);
+    const campEl = document.getElementById(`campMetrics_${campId}`);
+    if (campEl) campEl.innerHTML = buildCampMetricsHTML(plat, camp);
+    refreshPlatSummary(platId);
+  }
+
+  function refreshPlatSummary(platId) {
+    const plat = findPlat(platId);
+    if (!plat) return;
+    const el = document.getElementById(`platSummary_${platId}`);
+    if (el) el.innerHTML = buildPlatSummary(plat);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CARD RENDER
+  // ─────────────────────────────────────────────────────────────────
+  function renderCard(plat, camp, adset, ad) {
+    const el = document.createElement('div');
+    el.className = 'ad-card';
+    el.dataset.adId = ad.id;
+
+    const sp = Number(ad.spend || 0);
+    const im = Number(ad.impressions || 0);
+    const rc = Number(ad.reach || 0);
+    const cl = Number(ad.clicks || 0);
+    const cpm  = im > 0 ? sp / im * 1000 : 0;
+    const ctr  = im > 0 ? cl / im * 100 : 0;
+    const freq = rc > 0 ? im / rc : 0;
+
+    const thumbHTML = ad.img
+      ? `<img src="${ad.img}" alt="${esc(ad.name)}">`
+      : `<div class="no-thumb">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+             <polyline points="21 15 16 10 5 21"/>
+           </svg>
+           <span>Sin imagen</span>
+         </div>`;
+
+    const adM1Lbl = ad.m1Label || '';
+    const adM2Lbl = ad.m2Label || '';
+    const m1Val   = ad.metric1 || '';
+    const m2Val   = ad.metric2 || '';
+    const m2sub = (m2Val) ? `${adM2Lbl ? esc(adM2Lbl) + ': ' : ''}${esc(m2Val)}` : '&nbsp;';
+    const m1Block = (adM1Lbl && m1Val)
+      ? `<div class="mb hl"><div class="ml">${esc(adM1Lbl)}</div><div class="mv">${esc(m1Val)}</div><div class="msub">${m2sub}</div></div>`
+      : `<div class="mb"><div class="ml">Clics</div><div class="mv">${fmtRaw(cl)}</div><div class="msub">&nbsp;</div></div>`;
+
+    const cell4 = (adM1Lbl && m1Val && cl > 0)
+      ? `<div class="mb"><div class="ml">Clics</div><div class="mv">${fmtRaw(cl)}</div><div class="msub">CTR: ${fmtP(ctr)}</div></div>`
+      : (freq > 0 ? `<div class="mb"><div class="ml">Frec.</div><div class="mv">${freq.toFixed(2)}</div><div class="msub">&nbsp;</div></div>` : '');
+
+    el.innerHTML = `
+      <div class="ad-thumb" onclick="openImgUploadForCard('${plat.id}','${camp.id}','${adset.id}','${ad.id}')">
+        ${thumbHTML}
+        <div class="thumb-overlay">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+      </div>
+      <div class="ad-body">
+        <div class="ad-name">${esc(ad.name || 'Sin nombre')}</div>
+        <div class="ad-ms">
+          ${m1Block}
+          <div class="mb"><div class="ml">Invertido</div><div class="mv">${fmtS(sp)}</div><div class="msub">Impr: ${fmtRaw(im)}</div></div>
+          <div class="mb"><div class="ml">Alcance</div><div class="mv">${fmtRaw(rc)}</div><div class="msub">CPM: ${fmtS(cpm)}</div></div>
+          ${cell4}
+        </div>
+        <div class="card-actions">
+          <button class="card-action-btn card-edit-btn" onclick="openCardModal('${plat.id}','${camp.id}','${adset.id}','${ad.id}')">✎ Editar</button>
+          <button class="card-action-btn card-del-btn" onclick="deleteCard('${plat.id}','${camp.id}','${adset.id}','${ad.id}')">✕</button>
+        </div>
+      </div>
+    `;
+
+    return el;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MODAL STATE
+  // ─────────────────────────────────────────────────────────────────
+  let _modalPlatId   = null;
+  let _modalCampId   = null;
+  let _modalAdsetId  = null;
+  let _modalAdId     = null;
+  let _modalImgData  = null;
+
+  function openCardModal(platId, campId, adsetId, adId) {
+    _modalPlatId  = platId;
+    _modalCampId  = campId;
+    _modalAdsetId = adsetId;
+    _modalAdId    = adId;
+
+    const plat  = findPlat(platId);
+    const camp  = plat ? findCamp(plat, campId) : null;
+    const adset = camp ? findAdset(camp, adsetId) : null;
+    const ad    = adset ? findAd(adset, adId) : null;
+
+    if (!ad) return;
+
+    document.getElementById('modalTitle').textContent = adId ? 'Editar Tarjeta' : 'Nueva Tarjeta';
+    document.getElementById('mName').value        = ad.name || '';
+    document.getElementById('mSpend').value       = ad.spend || '';
+    document.getElementById('mImpressions').value = ad.impressions || '';
+    document.getElementById('mReach').value       = ad.reach || '';
+    document.getElementById('mClicks').value      = ad.clicks || '';
+    document.getElementById('mMetric1Label').value    = ad.m1Label || '';
+    document.getElementById('mMetric1').value          = ad.metric1 || '';
+    document.getElementById('mMetric2Label').value    = ad.m2Label || '';
+    document.getElementById('mMetric2').value          = ad.metric2 || '';
+
+    // image preview
+    _modalImgData = ad.img || null;
+    const prev = document.getElementById('mImgPreview');
+    if (ad.img) { prev.src = ad.img; prev.classList.add('show'); }
+    else { prev.src = ''; prev.classList.remove('show'); }
+
+    document.getElementById('cardModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('mName').focus();
+    updateModalPreview();
+  }
+
+  function updateModalPreview() {
+    const name   = document.getElementById('mName')?.value || 'Sin nombre';
+    const sp     = parseFloat(document.getElementById('mSpend')?.value) || 0;
+    const im     = parseInt(document.getElementById('mImpressions')?.value) || 0;
+    const rc     = parseInt(document.getElementById('mReach')?.value) || 0;
+    const cl     = parseInt(document.getElementById('mClicks')?.value) || 0;
+    const m1Val  = document.getElementById('mMetric1')?.value.trim() || '';
+    const m2Val  = document.getElementById('mMetric2')?.value.trim() || '';
+    const m1Lbl  = document.getElementById('mMetric1Label')?.value.trim() || '';
+    const m2Lbl  = document.getElementById('mMetric2Label')?.value.trim() || '';
+    const cpm    = im > 0 ? sp / im * 1000 : 0;
+    const ctr    = im > 0 ? cl / im * 100 : 0;
+    const freq   = rc > 0 ? im / rc : 0;
+
+    const nameEl = document.getElementById('mcpName');
+    if (nameEl) nameEl.textContent = name || 'Sin nombre';
+
+    const thumb = document.getElementById('mcpThumb');
+    if (thumb && _modalImgData) {
+      thumb.innerHTML = `<img src="${_modalImgData}" style="width:100%;height:100%;object-fit:cover;display:block">`;
+    }
+
+    const m2sub = (m2Val) ? `${m2Lbl ? m2Lbl + ': ' : ''}${m2Val}` : '&nbsp;';
+    const m1Block = (m1Val)
+      ? `<div class="mb hl"><div class="ml">${m1Lbl || 'Métrica 1'}</div><div class="mv">${m1Val}</div><div class="msub">${m2sub}</div></div>`
+      : `<div class="mb"><div class="ml">Clics</div><div class="mv">${cl > 0 ? cl.toLocaleString('es-PE') : '—'}</div><div class="msub">&nbsp;</div></div>`;
+    const cell4 = (m1Val && cl > 0)
+      ? `<div class="mb"><div class="ml">Clics</div><div class="mv">${cl.toLocaleString('es-PE')}</div><div class="msub">CTR: ${ctr.toFixed(2)}%</div></div>`
+      : (freq > 0 ? `<div class="mb"><div class="ml">Frec.</div><div class="mv">${freq.toFixed(2)}</div><div class="msub">&nbsp;</div></div>` : '');
+    const spFmt = sp > 0 ? `${CURRENCY} ${sp.toFixed(2)}` : '—';
+    const cpmFmt = cpm > 0 ? `${CURRENCY} ${cpm.toFixed(2)}` : '—';
+    const metricsEl = document.getElementById('mcpMetrics');
+    if (metricsEl) metricsEl.innerHTML = `
+      ${m1Block}
+      <div class="mb"><div class="ml">Invertido</div><div class="mv">${spFmt}</div><div class="msub">Impr: ${im > 0 ? im.toLocaleString('es-PE') : '—'}</div></div>
+      <div class="mb"><div class="ml">Alcance</div><div class="mv">${rc > 0 ? rc.toLocaleString('es-PE') : '—'}</div><div class="msub">CPM: ${cpmFmt}</div></div>
+      ${cell4}`;
+  }
+
+  function closeCardModal() {
+    document.getElementById('cardModal').style.display = 'none';
+    document.body.style.overflow = '';
+    _modalPlatId = _modalCampId = _modalAdsetId = _modalAdId = null;
+    _modalImgData = null;
+  }
+
+  function onModalOverlayClick(e) {
+    if (e.target === e.currentTarget) closeCardModal();
+  }
+
+  function saveCard() {
+    const plat  = findPlat(_modalPlatId);
+    const camp  = plat ? findCamp(plat, _modalCampId) : null;
+    const adset = camp ? findAdset(camp, _modalAdsetId) : null;
+    const ad    = adset ? findAd(adset, _modalAdId) : null;
+    if (!ad) return;
+
+    ad.name        = document.getElementById('mName').value || 'Sin nombre';
+    ad.spend       = parseFloat(document.getElementById('mSpend').value) || 0;
+    ad.impressions = parseInt(document.getElementById('mImpressions').value) || 0;
+    ad.reach       = parseInt(document.getElementById('mReach').value) || 0;
+    ad.clicks      = parseInt(document.getElementById('mClicks').value) || 0;
+    ad.m1Label     = document.getElementById('mMetric1Label').value.trim();
+    ad.metric1     = document.getElementById('mMetric1').value.trim();
+    ad.m2Label     = document.getElementById('mMetric2Label').value.trim();
+    ad.metric2     = document.getElementById('mMetric2').value.trim();
+    if (_modalImgData) ad.img = _modalImgData;
+
+    closeCardModal();
+    saveState();
+    render();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // IMAGE UPLOAD
+  // ─────────────────────────────────────────────────────────────────
+  let _imgPlatId = null, _imgCampId = null, _imgAdsetId = null, _imgAdId = null;
+  let _imgTarget = 'modal'; // 'modal' or 'card'
+
+  function openImgUploadForCard(platId, campId, adsetId, adId) {
+    _imgPlatId  = platId;
+    _imgCampId  = campId;
+    _imgAdsetId = adsetId;
+    _imgAdId    = adId;
+    _imgTarget  = 'card';
+    document.getElementById('imgUploadInput').click();
+  }
+
+  function onImgUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = e.target.result;
+      if (_imgTarget === 'modal') {
+        _modalImgData = data;
+        const prev = document.getElementById('mImgPreview');
+        prev.src = data; prev.classList.add('show');
+        updateModalPreview();
+      } else {
+        // direct card upload
+        const plat  = findPlat(_imgPlatId);
+        const camp  = plat ? findCamp(plat, _imgCampId) : null;
+        const adset = camp ? findAdset(camp, _imgAdsetId) : null;
+        const ad    = adset ? findAd(adset, _imgAdId) : null;
+        if (ad) { ad.img = data; saveState(); render(); }
+      }
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  // When modal open, image upload targets the modal
+  document.getElementById('imgUploadInput').addEventListener('click', function() {
+    if (document.getElementById('cardModal').style.display === 'block') {
+      _imgTarget = 'modal';
+    }
+  }, true);
+
+  // ─────────────────────────────────────────────────────────────────
+  // MUTATIONS — PLATFORM
+  // ─────────────────────────────────────────────────────────────────
+  function addPlatform() {
+    state.platforms.push({ id: uid(), type: 'meta', name: 'Meta', campaigns: [] });
+    saveState(); render();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function deletePlatform(platId) {
+    if (!confirm('¿Eliminar esta plataforma y todas sus campañas?')) return;
+    state.platforms = state.platforms.filter(p => p.id !== platId);
+    saveState(); render();
+  }
+
+  function setPlatName(platId, val) {
+    const plat = findPlat(platId);
+    if (plat) plat.name = val;
+    saveState();
+  }
+
+  function setPlatType(platId, type) {
+    const plat = findPlat(platId);
+    if (!plat) return;
+    plat.type = type;
+    plat.name = PLATFORM_TYPES[type]?.name || type;
+    saveState();
+    // re-render just the platform block header icon
+    const platEl = document.querySelector(`[data-plat-id="${platId}"]`);
+    if (platEl) {
+      const iconEl = platEl.querySelector('.plat-logo');
+      if (iconEl) iconEl.outerHTML = PLATFORM_TYPES[type]?.icon || '';
+    }
+  }
+
+  function setPlatM1Label(platId, val) {
+    const plat = findPlat(platId);
+    if (plat) plat.m1Label = val;
+    saveState(); updateSummary();
+    // update platform summary pills
+    const summaryEl = document.getElementById(`platSummary_${platId}`);
+    if (summaryEl) summaryEl.innerHTML = buildPlatSummary(plat);
+  }
+
+  function setPlatM2Label(platId, val) {
+    const plat = findPlat(platId);
+    if (plat) plat.m2Label = val;
+    saveState();
+    const summaryEl = document.getElementById(`platSummary_${platId}`);
+    if (summaryEl) summaryEl.innerHTML = buildPlatSummary(plat);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MUTATIONS — CAMPAIGN
+  // ─────────────────────────────────────────────────────────────────
+  function addCampaign(platId) {
+    const plat = findPlat(platId);
+    if (!plat) return;
+    plat.campaigns.push({
+      id: uid(), name: 'Nueva Campaña', icon: '📊', color: '#9b59b6', adsets: []
+    });
+    saveState(); render();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function deleteCampaign(platId, campId) {
+    if (!confirm('¿Eliminar esta campaña y todos sus datos?')) return;
+    const plat = findPlat(platId);
+    if (plat) plat.campaigns = plat.campaigns.filter(c => c.id !== campId);
+    saveState(); render();
+  }
+
+  function setCampName(platId, campId, val) {
+    const plat = findPlat(platId);
+    const camp = plat ? findCamp(plat, campId) : null;
+    if (camp) camp.name = val;
+    saveState(); updateSummary();
+  }
+
+  function setCampIcon(platId, campId, icon) {
+    const plat = findPlat(platId);
+    const camp = plat ? findCamp(plat, campId) : null;
+    if (!camp) return;
+    camp.icon = icon;
+    saveState();
+    const block = document.querySelector(`.sec-block[data-camp-id="${campId}"]`);
+    if (block) {
+      const iconEl = block.querySelector('.sec-icon');
+      if (iconEl) iconEl.textContent = icon;
+      block.querySelectorAll('.icon-opt').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === icon);
+      });
+    }
+  }
+
+  function setCampColor(platId, campId, color) {
+    const plat = findPlat(platId);
+    const camp = plat ? findCamp(plat, campId) : null;
+    if (!camp) return;
+    camp.color = color;
+    saveState();
+    const block = document.querySelector(`.sec-block[data-camp-id="${campId}"]`);
+    if (block) {
+      const iconEl = block.querySelector('.sec-icon');
+      if (iconEl) iconEl.style.background = color + '22';
+      block.querySelectorAll('.color-opt').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${color}'`));
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MUTATIONS — ADSET
+  // ─────────────────────────────────────────────────────────────────
+  function addAdset(platId, campId) {
+    const plat = findPlat(platId);
+    const camp = plat ? findCamp(plat, campId) : null;
+    if (!camp) return;
+    camp.adsets.push({ id: uid(), name: 'Nuevo Ad Set', ads: [] });
+    saveState(); render();
+  }
+
+  function deleteAdset(platId, campId, adsetId) {
+    if (!confirm('¿Eliminar este ad set?')) return;
+    const plat = findPlat(platId);
+    const camp = plat ? findCamp(plat, campId) : null;
+    if (camp) camp.adsets = camp.adsets.filter(as => as.id !== adsetId);
+    saveState(); render();
+  }
+
+  function setAdsetName(platId, campId, adsetId, val) {
+    const plat  = findPlat(platId);
+    const camp  = plat ? findCamp(plat, campId) : null;
+    const adset = camp ? findAdset(camp, adsetId) : null;
+    if (adset) adset.name = val;
+    saveState();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MUTATIONS — CARD
+  // ─────────────────────────────────────────────────────────────────
+  function addCard(platId, campId, adsetId) {
+    const plat  = findPlat(platId);
+    const camp  = plat ? findCamp(plat, campId) : null;
+    const adset = camp ? findAdset(camp, adsetId) : null;
+    if (!adset) return;
+    const newAd = {
+      id: uid(), name: 'Nuevo Anuncio', img: null,
+      status: 'Activo', spend: 0, impressions: 0, reach: 0, clicks: 0,
+      metric1: 0, metric2: 0
+    };
+    adset.ads.push(newAd);
+    saveState();
+    render();
+    setTimeout(() => openCardModal(platId, campId, adsetId, newAd.id), 50);
+  }
+
+  function deleteCard(platId, campId, adsetId, adId) {
+    const plat  = findPlat(platId);
+    const camp  = plat ? findCamp(plat, campId) : null;
+    const adset = camp ? findAdset(camp, adsetId) : null;
+    if (adset) adset.ads = adset.ads.filter(a => a.id !== adId);
+    saveState(); render();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // IMPORT / EXPORT JSON
+  // ─────────────────────────────────────────────────────────────────
+  function nuevoReporte() {
+    if (!confirm('¿Empezar desde cero? Se borrará todo el reporte actual.')) return;
+    localStorage.removeItem('rpo_state');
+    state = {
+      clientName: '', agencyName: '', df: '', dt: '',
+      currency: 'S/', platforms: [], conclusiones: ''
+    };
+    CURRENCY = 'S/';
+    CLIENT_NAME = 'Cliente';
+    applyConfigToUI();
+    render();
+  }
+
+  function exportJSON() {
+    const ct = document.getElementById('conclusionesText');
+    if (ct) state.conclusiones = ct.value;
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `ReportePO_${state.clientName || 'reporte'}_${state.df || 'sin-fecha'}.json`.replace(/ /g,'_');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
+  function exportHTML() {
+    const ct = document.getElementById('conclusionesText');
+    if (ct) state.conclusiones = ct.value;
+
+    const clientName = state.clientName || 'Cliente';
+    const agencyName = state.agencyName || '';
+    const df = state.df || '';
+    const dt = state.dt || '';
+    const dateLine = [df, dt].filter(Boolean).join(' → ');
+
+    // ── helper: escape HTML special chars
+    function e(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── helper: pill row HTML
+    function pills(arr) {
+      return arr.map(p => `<div class="ep${p.hl?' hl':''}"><div class="epl">${p.l}</div><div class="epv">${p.v}</div></div>`).join('');
+    }
+
+
+    // ── PORTADA
+    const coverHTML = `
+<div class="portada">
+  ${agencyName ? `<div class="portada-agency">${e(agencyName)}</div>` : ''}
+  <div class="portada-label">Reporte de Campaña Digital</div>
+  <h1 class="portada-title">${e(clientName)}</h1>
+  ${dateLine ? `<div class="portada-date">${e(dateLine)}</div>` : ''}
+</div>`;
+
+    // ── PLATFORM LOGOS
+    const LOGOS = {meta:'f', tiktok:'TT', google:'G', linkedin:'in'};
+
+    // ── RENDER FUNCTIONS
+    function renderCard(ad) {
+      const sp=Number(ad.spend||0), im=Number(ad.impressions||0),
+            rc=Number(ad.reach||0),  cl=Number(ad.clicks||0);
+      const cpm = im>0 ? sp/im*1000 : 0;
+      const ctr = im>0 ? cl/im*100  : 0;
+      const m1v = ad.metric1||'', m1l = ad.m1Label||'';
+      const m2v = ad.metric2||'', m2l = ad.m2Label||'';
+
+      const thumb = ad.img
+        ? `<img src="${ad.img}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.1);font-size:28px;">📷</div>`;
+
+      const m2sub = m2v ? `<div class="ex-ms">${m2l ? e(m2l)+': ' : ''}${e(m2v)}</div>` : '';
+      const m1cell = (m1l&&m1v) ? `<div class="ex-cm hl"><div class="ex-cml">${e(m1l)}</div><div class="ex-cmv">${e(m1v)}</div>${m2sub}</div>` : '';
+      const spcell = sp>0 ? `<div class="ex-cm"><div class="ex-cml">Invertido</div><div class="ex-cmv">${fmtS(sp)}</div>${im>0?`<div class="ex-ms">Impr: ${fmtRaw(im)}</div>`:''}</div>` : '';
+      const rccell = rc>0 ? `<div class="ex-cm"><div class="ex-cml">Alcance</div><div class="ex-cmv">${fmtRaw(rc)}</div>${cpm>0?`<div class="ex-ms">CPM: ${fmtS(cpm)}</div>`:''}</div>` : '';
+      const clcell = cl>0 ? `<div class="ex-cm"><div class="ex-cml">Clics</div><div class="ex-cmv">${fmtRaw(cl)}</div>${ctr>0?`<div class="ex-ms">CTR: ${fmtP(ctr)}</div>`:''}</div>` : '';
+
+      return `<div class="ex-card">
+  <div style="width:100%;aspect-ratio:1;overflow:hidden;background:#0a1520;">${thumb}</div>
+  <div style="padding:13px 15px 15px;">
+    <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.92);margin-bottom:10px;line-height:1.3;">${e(ad.name||'Anuncio')}</div>
+    <div class="ex-card-metrics">${m1cell}${spcell}${rccell}${clcell}</div>
+  </div>
+</div>`;
+    }
+
+    function renderAdset(camp, adset) {
+      const m = effectiveAdsetMetrics(adset);
+      const cpm  = m.impressions>0 ? m.spend/m.impressions*1000 : 0;
+      const freq  = m.reach>0 ? m.impressions/m.reach : 0;
+      const hlA = adset.hl || {};
+      const mxA = adset.mx || {};
+      const adsetPills = [
+        {l:'Invertido',   v:fmtS(m.spend),        hl:!!hlA.spend},
+        {l:'Alcance',     v:fmtRaw(m.reach),       hl:!!hlA.reach},
+        {l:'Impresiones', v:fmtRaw(m.impressions), hl:!!hlA.impressions},
+        ...(cpm>0  ?[{l:'CPM',        v:fmtS(cpm),           hl:!!hlA.cpm}]:[]),
+        ...(freq>0 ?[{l:'Frec.',      v:freq.toFixed(2)+'x', hl:!!hlA.freq}]:[]),
+        ...(mxA.m1Value ?[{l:mxA.m1Label||'Métrica 1', v:mxA.m1Value, hl:!!hlA.m1}]:[]),
+        ...(mxA.m2Value ?[{l:mxA.m2Label||'Métrica 2', v:mxA.m2Value, hl:!!hlA.m2}]:[]),
+      ];
+      adsetPills.sort((a,b) => (b.hl?1:0)-(a.hl?1:0));
+      const cardsHTML = adset.ads.map(renderCard).join('');
+      return `<div class="ex-adset-block">
+  <div class="ex-label" style="margin-bottom:4px;">Conjunto de anuncios</div>
+  <div class="ex-adset-name">${e(adset.name||'Ad Set')}</div>
+  <div class="ep-row">${pills(adsetPills)}</div>
+  ${cardsHTML ? `<div class="ex-card-grid">${cardsHTML}</div>` : ''}
+</div>`;
+    }
+
+    function renderCampaign(plat, camp) {
+      const m = effectiveCampMetrics(camp);
+      const cpm  = m.impressions>0 ? m.spend/m.impressions*1000 : 0;
+      const freq  = m.reach>0 ? m.impressions/m.reach : 0;
+      // find first m1Label from any ad (shown as objective label)
+      let m1Lbl = '';
+      outer: for (const as of camp.adsets) for (const ad of as.ads) { if (ad.m1Label){m1Lbl=ad.m1Label;break outer;} }
+      const hlC = camp.hl || {};
+      const mxC = camp.mx || {};
+      const campPills = [
+        {l:'Invertido',   v:fmtS(m.spend),        hl:!!hlC.spend},
+        {l:'Alcance',     v:fmtRaw(m.reach),       hl:!!hlC.reach},
+        {l:'Impresiones', v:fmtRaw(m.impressions), hl:!!hlC.impressions},
+        ...(cpm>0  ?[{l:'CPM',        v:fmtS(cpm),           hl:!!hlC.cpm}]:[]),
+        ...(freq>0 ?[{l:'Frecuencia', v:freq.toFixed(2)+'x', hl:!!hlC.freq}]:[]),
+        ...(mxC.m1Value ?[{l:mxC.m1Label||'Métrica 1', v:mxC.m1Value, hl:!!hlC.m1}]:[]),
+        ...(mxC.m2Value ?[{l:mxC.m2Label||'Métrica 2', v:mxC.m2Value, hl:!!hlC.m2}]:[]),
+      ];
+      campPills.sort((a,b) => (b.hl?1:0)-(a.hl?1:0));
+      const adsetsHTML = camp.adsets.map(as => renderAdset(camp, as)).join('');
+      return `<div class="ex-camp-block">
+  <div class="ex-label" style="margin-bottom:6px;">Campaña${m1Lbl ? ` <span style="color:#44B7A4;margin-left:10px;font-size:10px;">● ${e(m1Lbl)}</span>` : ''}</div>
+  <div class="ex-camp-name">${e(camp.icon||'')} ${e(camp.name||'Campaña')}</div>
+  <div class="ep-row">${pills(campPills)}</div>
+  ${adsetsHTML ? `<div class="ex-adsets-wrap">${adsetsHTML}</div>` : ''}
+</div>`;
+    }
+
+    function renderPlatform(plat) {
+      const m = effectivePlatMetrics(plat);
+      const cpm  = m.impressions>0 ? m.spend/m.impressions*1000 : 0;
+      const freq  = m.reach>0 ? m.impressions/m.reach : 0;
+      const ctr  = m.impressions>0 ? m.clicks/m.impressions*100 : 0;
+      const hlP = plat.hl || {};
+      const mxP = plat.mx || {};
+      const platPills = [
+        {l:'Invertido',   v:fmtS(m.spend),        hl:!!hlP.spend},
+        {l:'Alcance',     v:fmtRaw(m.reach),       hl:!!hlP.reach},
+        {l:'Impresiones', v:fmtRaw(m.impressions), hl:!!hlP.impressions},
+        ...(cpm>0  ?[{l:'CPM',        v:fmtS(cpm),           hl:!!hlP.cpm}]:[]),
+        ...(freq>0 ?[{l:'Frecuencia', v:freq.toFixed(2)+'x', hl:!!hlP.freq}]:[]),
+        ...(ctr>0  ?[{l:'CTR',        v:fmtP(ctr),           hl:!!hlP.ctr}]:[]),
+        ...(mxP.m1Value ?[{l:mxP.m1Label||'Métrica 1', v:mxP.m1Value, hl:!!hlP.m1}]:[]),
+        ...(mxP.m2Value ?[{l:mxP.m2Label||'Métrica 2', v:mxP.m2Value, hl:!!hlP.m2}]:[]),
+      ];
+      platPills.sort((a,b) => (b.hl?1:0)-(a.hl?1:0));
+      const lk = plat.type||'meta';
+      const campsHTML = plat.campaigns.map(c => renderCampaign(plat, c)).join('');
+      return `<hr class="ex-divider">
+<div class="ex-section">
+  <div class="ex-plat-hdr">
+    <div class="ex-plat-logo ${lk}">${LOGOS[lk]||'🌐'}</div>
+    <div class="ex-plat-name">${e(plat.name||'Plataforma')}</div>
+  </div>
+  <div class="ep-row" style="margin-bottom:8px;">${pills(platPills)}</div>
+  ${campsHTML}
+</div>`;
+    }
+
+    const sectionsHTML = state.platforms.map(renderPlatform).join('');
+
+    // ── CONCLUSIONES
+    let concHTML = '';
+    if (state.conclusiones?.trim()) {
+      concHTML = `<div class="ex-section" style="padding-top:0;padding-bottom:80px;">
+  <div style="background:rgba(214,255,2,0.05);border:1.5px solid rgba(214,255,2,0.22);border-radius:16px;padding:44px 56px;">
+    <div class="ex-label" style="margin-bottom:18px;">Conclusiones / Recomendaciones</div>
+    <div style="font-size:17px;color:rgba(255,255,255,0.82);line-height:1.85;white-space:pre-wrap;font-family:'DM Sans',sans-serif;">${e(state.conclusiones)}</div>
+  </div>
+</div>`;
+    }
+
+    // ── CSS
+    const css = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #01080E; color: #fff; font-family: 'DM Sans', sans-serif; }
+/* PORTADA */
+.portada {
+  min-height: 100vh;
+  background-color: #01080E;
+  background-image: radial-gradient(circle at top right, rgba(97,39,255,0.28) 0%, transparent 45%),
+                    radial-gradient(circle at bottom left, rgba(68,183,164,0.07) 0%, #01080E 55%);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 100px 140px;
+}
+.portada-agency { font-size:15px; font-weight:700; color:#D6FF02; letter-spacing:.06em; margin-bottom:52px; }
+.portada-label  { font-size:12px; color:#44B7A4; text-transform:uppercase; letter-spacing:.18em; font-weight:700; margin-bottom:22px; }
+.portada-title  { font-family:'Syne',sans-serif; font-size:clamp(56px,8vw,100px); font-weight:800; color:#fff; line-height:1.02; margin-bottom:22px; letter-spacing:-.025em; }
+.portada-date   { font-size:18px; color:rgba(255,255,255,0.4); margin-bottom:60px; }
+/* PILLS */
+.ep-row { display:flex; flex-wrap:wrap; gap:12px; }
+.ep { background:rgba(2,16,28,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:18px 28px; min-width:140px; }
+.ep.hl { background:rgba(214,255,2,0.07); border-color:rgba(214,255,2,0.3); }
+.epl { font-size:10px; text-transform:uppercase; letter-spacing:.11em; color:rgba(255,255,255,0.38); margin-bottom:7px; }
+.ep.hl .epl { color:rgba(214,255,2,0.65); }
+.epv { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; color:#fff; }
+.ep.hl .epv { color:#D6FF02; }
+/* LAYOUT */
+.ex-divider { border:none; border-top:2px solid rgba(214,255,2,0.12); margin:0; }
+.ex-section { padding:48px 80px 40px; }
+.ex-label { font-size:11px; color:#D6FF02; text-transform:uppercase; letter-spacing:.13em; font-weight:700; }
+/* PLATFORM */
+.ex-plat-hdr { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+.ex-plat-logo { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0; letter-spacing:-.5px; }
+.ex-plat-logo.meta     { background:#1877F2; color:#fff; font-size:22px; font-family:Georgia,serif; }
+.ex-plat-logo.tiktok   { background:#010101; color:#fff; font-size:12px; border:1px solid #333; }
+.ex-plat-logo.google   { background:#fff; color:#4285F4; font-size:20px; }
+.ex-plat-logo.linkedin { background:#0A66C2; color:#fff; font-size:15px; }
+.ex-plat-name { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:#fff; }
+/* CAMPAIGN */
+.ex-camp-block { margin-top:48px; padding-top:36px; border-top:1px solid rgba(255,255,255,0.07); }
+.ex-camp-obj  { font-size:12px; color:#44B7A4; text-transform:uppercase; letter-spacing:.13em; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+.ex-camp-obj::before { content:'●'; color:#D6FF02; font-size:8px; }
+.ex-camp-name { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:#fff; margin-bottom:22px; }
+/* ADSET */
+.ex-adsets-wrap { margin-top:28px; padding-left:32px; border-left:2px solid rgba(255,255,255,0.08); }
+.ex-adset-block { margin-top:32px; }
+.ex-adset-block:first-child { margin-top:0; }
+.ex-adset-name { font-family:'Syne',sans-serif; font-size:21px; font-weight:700; color:#fff; margin:8px 0 20px; display:flex; align-items:center; gap:10px; }
+.ex-adset-name::before { content:''; display:inline-block; width:5px; height:18px; background:#D6FF02; border-radius:3px; flex-shrink:0; }
+/* CARDS */
+.ex-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; margin-top:22px; padding-left:20px; border-left:2px solid rgba(214,255,2,0.08); }
+.ex-card { border:1px solid rgba(255,255,255,0.07); border-radius:12px; overflow:hidden; background:rgba(255,255,255,0.025); }
+.ex-card-metrics { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.ex-cm { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:8px 11px; }
+.ex-cm.hl { background:rgba(214,255,2,0.09); border-color:rgba(214,255,2,0.32); }
+.ex-cml { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.38); margin-bottom:3px; }
+.ex-cm.hl .ex-cml { color:rgba(214,255,2,0.65); }
+.ex-cmv { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#fff; }
+.ex-cm.hl .ex-cmv { color:#D6FF02; }
+.ex-ms { font-size:10px; color:rgba(255,255,255,0.32); margin-top:2px; }
+`;
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte Digital — ${e(clientName)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>${css}</style>
+</head>
+<body>
+${coverHTML}
+${sectionsHTML}
+${concHTML}
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Reporte_${clientName.replace(/ /g,'_')}_${df||'sin-fecha'}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
+  function importJSON() {
+    document.getElementById('jsonImportInput').click();
+  }
+
+  function onJSONImport(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        state = parsed;
+        // run migration in case imported file is old format
+        if (Array.isArray(state.campaigns) && !Array.isArray(state.platforms)) {
+          const m1Label = state.campaigns[0]?.m1Label || '';
+          const m2Label = state.campaigns[0]?.m2Label || '';
+          const migratedCampaigns = state.campaigns.map(c => {
+            const { m1Label: _m1, m2Label: _m2, ...rest } = c;
+            return rest;
+          });
+          state.platforms = [{
+            id: uid(),
+            type: 'meta',
+            name: 'Meta',
+            m1Label: m1Label,
+            m2Label: m2Label,
+            campaigns: migratedCampaigns
+          }];
+          delete state.campaigns;
+          delete state.platform;
+        }
+        if (!Array.isArray(state.platforms)) state.platforms = [];
+        CURRENCY    = state.currency || 'S/';
+        CLIENT_NAME = state.clientName || 'Cliente';
+        applyConfigToUI();
+        render();
+        saveState();
+      } catch(err) {
+        alert('Error al leer el archivo JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(input.files[0]);
+    input.value = '';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // STATUS HELPER
+  // ─────────────────────────────────────────────────────────────────
+  function setStatus(msg, type = 'info', spin = true) {
+    const b = document.getElementById('sb');
+    b.className = 'sb show ' + type;
+    document.getElementById('st').textContent = msg;
+    document.getElementById('sp').style.display = spin ? 'block' : 'none';
+  }
+  function clearStatus() {
+    document.getElementById('sb').className = 'sb';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // PDF EXPORT
+  // ─────────────────────────────────────────────────────────────────
+  async function makePDF() {
+    const btn = document.getElementById('pdfBtn');
+    if (btn) btn.disabled = true;
+    setStatus('Generando PDF visual… esto puede tardar unos segundos.', 'info', true);
+
+    const BG = '#01080E';
+
+    const captureEl = async (el) => {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `position:fixed;top:-9999px;left:0;background:${BG};padding:24px 32px;width:${Math.max(el.offsetWidth + 64, 900)}px;z-index:99999;`;
+      wrapper.appendChild(el.cloneNode(true));
+      document.body.appendChild(wrapper);
+      const canvas = await html2canvas(wrapper, {
+        scale: 2, useCORS: true, allowTaint: true,
+        backgroundColor: BG, logging: false,
+        width: wrapper.offsetWidth, height: wrapper.offsetHeight,
+      });
+      document.body.removeChild(wrapper);
+      return canvas;
+    };
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const PW = 297, PH = 210; // A4 landscape mm
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      let firstPage = true;
+
+      const addCanvasToPDF = (canvas) => {
+        if (!firstPage) pdf.addPage();
+        firstPage = false;
+        const ratio = canvas.width / canvas.height;
+        let imgW = PW, imgH = PW / ratio;
+        if (imgH > PH) { imgH = PH; imgW = PH * ratio; }
+        const x = (PW - imgW) / 2;
+        const y = (PH - imgH) / 2;
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, imgW, imgH);
+      };
+
+      // 1. Header only
+      setStatus('Capturando encabezado…', 'info', true);
+      const headerGroup = document.createElement('div');
+      headerGroup.appendChild(document.querySelector('#results .r-head').cloneNode(true));
+      const hw = document.createElement('div');
+      hw.style.cssText = `position:fixed;top:-9999px;left:0;background:${BG};padding:32px 36px;width:900px;z-index:99999;`;
+      hw.appendChild(headerGroup);
+      document.body.appendChild(hw);
+      const canvasHeader = await html2canvas(hw, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: BG, logging: false });
+      document.body.removeChild(hw);
+      addCanvasToPDF(canvasHeader);
+
+      // 2. One page per sec-block
+      const secBlocks = document.querySelectorAll('.sec-block');
+      for (let i = 0; i < secBlocks.length; i++) {
+        setStatus(`Capturando campaña ${i + 1} de ${secBlocks.length}…`, 'info', true);
+        const canvas = await captureEl(secBlocks[i]);
+        addCanvasToPDF(canvas);
+      }
+
+      // 3. Conclusiones
+      const concTxt = document.getElementById('conclusionesText')?.value?.trim();
+      if (concTxt) {
+        setStatus('Capturando conclusiones…', 'info', true);
+        const concRender = document.createElement('div');
+        concRender.style.cssText = `position:fixed;top:-9999px;left:0;background:${BG};padding:48px 56px;width:964px;z-index:99999;`;
+        concRender.innerHTML = `
+          <div style="background:rgba(214,255,2,0.06);border:2px solid rgba(214,255,2,0.35);border-radius:16px;padding:40px 52px;">
+            <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#D6FF02;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:20px;">Conclusiones / Recomendaciones</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:16px;color:#f0f0f0;line-height:1.8;white-space:pre-wrap;">${concTxt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          </div>`;
+        document.body.appendChild(concRender);
+        const concCanvas = await html2canvas(concRender, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: BG, logging: false });
+        document.body.removeChild(concRender);
+        addCanvasToPDF(concCanvas);
+      }
+
+      pdf.save(`Reporte_${CLIENT_NAME}_${state.df}_${state.dt}.pdf`.replace(/ /g, '_'));
+      setStatus('✓ PDF visual descargado.', 'ok', false);
+    } catch (e) {
+      console.error(e);
+      setStatus('Error PDF: ' + e.message, 'err', false);
+    }
+    if (btn) btn.disabled = false;
+    setTimeout(clearStatus, 5000);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // SCREENSHOTS EXPORT
+  // ─────────────────────────────────────────────────────────────────
+  async function makeScreenshots() {
+    const btn = document.getElementById('screenshotsBtn');
+    btn.disabled = true;
+    setStatus('Capturando secciones... esto puede tardar unos segundos.', 'info', true);
+
+    const BG = '#01080E';
+
+    const captureWithBg = async (el) => {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `position:fixed;top:-9999px;left:-9999px;background:${BG};padding:28px 32px;width:${el.offsetWidth + 64}px;z-index:99999;`;
+      const clone = el.cloneNode(true);
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+      const canvas = await html2canvas(wrapper, {
+        scale: 2, useCORS: true, allowTaint: true,
+        backgroundColor: BG, logging: false,
+        width: wrapper.offsetWidth, height: wrapper.offsetHeight,
+      });
+      document.body.removeChild(wrapper);
+      return canvas;
+    };
+
+    try {
+      const sections = [];
+
+      // 1. Header only
+      setStatus('Capturando encabezado...', 'info', true);
+      const headerEl = document.querySelector('#results .r-head');
+      const headerGroup = document.createElement('div');
+      headerGroup.appendChild(headerEl.cloneNode(true));
+      const hw = document.createElement('div');
+      hw.style.cssText = `position:fixed;top:-9999px;left:-9999px;background:${BG};padding:28px 32px;width:900px;z-index:99999;`;
+      hw.appendChild(headerGroup);
+      document.body.appendChild(hw);
+      const canvasHeader = await html2canvas(hw, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: BG, logging: false });
+      document.body.removeChild(hw);
+      sections.push({ name: '00_encabezado', canvas: canvasHeader });
+
+      // 2. Each sec-block
+      const secBlocks = document.querySelectorAll('.sec-block');
+      for (let i = 0; i < secBlocks.length; i++) {
+        setStatus(`Capturando sección ${i + 1} de ${secBlocks.length}...`, 'info', true);
+        const block = secBlocks[i];
+        const nameEl = block.querySelector('.sec-name, .editable-name');
+        const campName = (nameEl ? (nameEl.value || nameEl.textContent) : `seccion_${i+1}`)
+          .trim().slice(0, 40).replace(/[^a-z0-9\-_áéíóúñ ]/gi, '').replace(/ /g, '_');
+        const canvas = await captureWithBg(block);
+        sections.push({ name: `${String(i + 1).padStart(2, '0')}_${campName}`, canvas });
+      }
+
+      // 3. Conclusiones
+      const concTxt = document.getElementById('conclusionesText')?.value?.trim();
+      if (concTxt) {
+        setStatus('Capturando conclusiones…', 'info', true);
+        const concRender = document.createElement('div');
+        concRender.style.cssText = `position:fixed;top:-9999px;left:-9999px;background:${BG};padding:48px 56px;width:964px;z-index:99999;`;
+        concRender.innerHTML = `
+          <div style="background:rgba(214,255,2,0.06);border:2px solid rgba(214,255,2,0.35);border-radius:16px;padding:40px 52px;">
+            <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#D6FF02;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:20px;">Conclusiones / Recomendaciones</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:16px;color:#f0f0f0;line-height:1.8;white-space:pre-wrap;">${concTxt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          </div>`;
+        document.body.appendChild(concRender);
+        const concCanvas = await html2canvas(concRender, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: BG, logging: false });
+        document.body.removeChild(concRender);
+        sections.push({ name: `${String(secBlocks.length + 1).padStart(2, '0')}_conclusiones`, canvas: concCanvas });
+      }
+
+      // 4. Download all as PNG
+      setStatus(`Descargando ${sections.length} imágenes...`, 'info', false);
+      for (const sec of sections) {
+        await new Promise(r => setTimeout(r, 200));
+        const link = document.createElement('a');
+        link.download = `${CLIENT_NAME}_${state.df}_${sec.name}.png`.replace(/ /g, '_');
+        link.href = sec.canvas.toDataURL('image/png');
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      }
+
+      setStatus(`✓ ${sections.length} imágenes PNG descargadas.`, 'ok', false);
+    } catch (e) {
+      console.error(e);
+      setStatus('Error al capturar: ' + e.message, 'err', false);
+    }
+    btn.disabled = false;
+    setTimeout(clearStatus, 6000);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // UTILS
+  // ─────────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // KEYBOARD: ESC closes modal
+  // ─────────────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCardModal();
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // INIT
+  // ─────────────────────────────────────────────────────────────────
+  (function init() {
+    loadState();
+    applyConfigToUI();
+    render();
+  })();
+</script>
+</body>
+</html>
