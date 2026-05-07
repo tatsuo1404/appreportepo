@@ -2011,11 +2011,16 @@
       const rccell = rc>0 ? `<div class="ex-cm"><div class="ex-cml">Alcance</div><div class="ex-cmv">${fmtRaw(rc)}</div>${cpm>0?`<div class="ex-ms">CPM: ${fmtS(cpm)}</div>`:''}</div>` : '';
       const clcell = cl>0 ? `<div class="ex-cm"><div class="ex-cml">Clics</div><div class="ex-cmv">${fmtRaw(cl)}</div>${ctr>0?`<div class="ex-ms">CTR: ${fmtP(ctr)}</div>`:''}</div>` : '';
 
+      const commentHTML = ad.comment
+        ? `<div style="margin-top:10px;padding:7px 9px;background:rgba(214,255,2,0.07);border:1px solid rgba(214,255,2,0.2);border-radius:6px;font-size:11px;color:rgba(214,255,2,0.75);line-height:1.5;white-space:pre-wrap;word-break:break-word;">${e(ad.comment)}</div>`
+        : '';
+
       return `<div class="ex-card">
   <div style="width:100%;aspect-ratio:1;overflow:hidden;background:#0a1520;">${thumb}</div>
   <div style="padding:13px 15px 15px;">
     <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.92);margin-bottom:10px;line-height:1.3;">${e(ad.name||'Anuncio')}</div>
     <div class="ex-card-metrics">${m1cell}${spcell}${rccell}${clcell}</div>
+    ${commentHTML}
   </div>
 </div>`;
     }
